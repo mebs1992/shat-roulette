@@ -4,25 +4,27 @@
     { "id": "page-2", "name": "Alt Directions" }
   ],
   "artboards": [
-    { "file": "Main.dc.html",         "title": "1 · Home",            "page": "page-1", "x": 0,    "y": 0,    "w": 390, "h": 844 },
-    { "file": "Confirm.dc.html",      "title": "2 · Confirmation",    "page": "page-1", "x": 470,  "y": 0,    "w": 390, "h": 844 },
-    { "file": "Matchmaking.dc.html",  "title": "3 · Matchmaking",     "page": "page-1", "x": 940,  "y": 0,    "w": 390, "h": 844 },
-    { "file": "MatchFound.dc.html",   "title": "4 · Match Found",     "page": "page-1", "x": 1410, "y": 0,    "w": 390, "h": 844 },
-    { "file": "Chat.dc.html",         "title": "5 · Shat Chat",       "page": "page-1", "x": 0,    "y": 1000, "w": 390, "h": 844 },
-    { "file": "Prompts.dc.html",      "title": "6 · Prompts",         "page": "page-1", "x": 470,  "y": 1000, "w": 390, "h": 844 },
-    { "file": "EndChat.dc.html",      "title": "7 · End Chat",        "page": "page-1", "x": 940,  "y": 1000, "w": 390, "h": 844 },
-    { "file": "Summary.dc.html",      "title": "8 · Post-Shit",       "page": "page-1", "x": 1410, "y": 1000, "w": 390, "h": 844 },
-    { "file": "Profile.dc.html",      "title": "9 · Stats",           "page": "page-1", "x": 0,    "y": 2000, "w": 390, "h": 844 },
-    { "file": "Leaderboard.dc.html",  "title": "10 · Global",         "page": "page-1", "x": 470,  "y": 2000, "w": 390, "h": 844 },
+    { "file": "Main.dc.html",         "title": "1 · Home",             "page": "page-1", "x": 0,    "y": 0,    "w": 390, "h": 844 },
+    { "file": "Confirm.dc.html",      "title": "2 · Confirmation",     "page": "page-1", "x": 470,  "y": 0,    "w": 390, "h": 844 },
+    { "file": "Gender.dc.html",       "title": "3 · You & Preference", "page": "page-1", "x": 940,  "y": 0,    "w": 390, "h": 844 },
+    { "file": "Matchmaking.dc.html",  "title": "4 · Matchmaking",      "page": "page-1", "x": 1410, "y": 0,    "w": 390, "h": 844 },
+    { "file": "MatchFound.dc.html",   "title": "5 · Match Found",      "page": "page-1", "x": 0,    "y": 1000, "w": 390, "h": 844 },
+    { "file": "Chat.dc.html",         "title": "6 · Shat Chat",        "page": "page-1", "x": 470,  "y": 1000, "w": 390, "h": 844 },
+    { "file": "Prompts.dc.html",      "title": "7 · Prompts",          "page": "page-1", "x": 940,  "y": 1000, "w": 390, "h": 844 },
+    { "file": "EndChat.dc.html",      "title": "8 · End Chat",         "page": "page-1", "x": 1410, "y": 1000, "w": 390, "h": 844 },
+    { "file": "Summary.dc.html",      "title": "9 · Post-Shit",        "page": "page-1", "x": 0,    "y": 2000, "w": 390, "h": 844 },
+    { "file": "Profile.dc.html",      "title": "10 · Stats",           "page": "page-1", "x": 470,  "y": 2000, "w": 390, "h": 844 },
+    { "file": "Leaderboard.dc.html",  "title": "11 · Global",          "page": "page-1", "x": 940,  "y": 2000, "w": 390, "h": 844 },
     { "file": "DirectionPorcelain.dc.html", "title": "Alt B · Porcelain Daylight", "page": "page-2", "x": 0,   "y": 0, "w": 390, "h": 844 },
-    { "file": "DirectionTabloid.dc.html",   "title": "Alt C · Tabloid Chaos",      "page": "page-2", "x": 470, "y": 0, "w": 390, "h": 844 }
+    { "file": "DirectionTabloid.dc.html",   "title": "Alt C · Tabloid Chaos",      "page": "page-2", "x": 470, "y": 0, "w": 390, "h": 844 },
+    { "file": "HomeDark.dc.html",           "title": "Alt A · The dark/lime one",  "page": "page-2", "x": 940, "y": 0, "w": 390, "h": 844 }
   ],
   "annotations": [
-    { "id": "note-1", "page": "page-1", "x": 0, "y": -150, "w": 520, "text": "CORE JOURNEY — read left to right, top to bottom.\nHome → Confirm → Matchmaking → Match Found → Chat → Prompts → End Chat → Post-Shit." },
-    { "id": "note-2", "page": "page-1", "x": 1880, "y": 0, "w": 300, "text": "Direction A — “Deadpan Dark”.\nWarm near-black, porcelain type, one acid-lime accent, mono for anything numeric. The joke lives in the copy; the UI plays it completely straight.\n\nType: Bricolage Grotesque (display) · Space Grotesk (UI) · JetBrains Mono (timers, IDs, labels)." },
-    { "id": "note-3", "page": "page-1", "x": 0, "y": 880, "w": 520, "text": "Chat is the product. Two live timers sit in the header so the absurd context is never off-screen. Prompts appear only after 40s of silence, and can be switched off." },
-    { "id": "note-4", "page": "page-1", "x": 0, "y": 1880, "w": 520, "text": "SECONDARY — anonymous stats and the global board. Deliberately not a social profile: no photo, no followers, no bio, and a one-tap new identity." },
-    { "id": "note-5", "page": "page-2", "x": 0, "y": -150, "w": 860, "text": "Two alternate directions, low-fi. B trades the joke for clinical restraint; C goes full meme-poster — louder screenshots, harder to live in day to day. Say the word and I'll rebuild the journey in either." }
+    { "id": "note-1", "page": "page-1", "x": 0, "y": -150, "w": 520, "text": "CORE JOURNEY — read left to right, top to bottom.\nHome → Confirm → You & preference → Matchmaking → Match Found → Chat → Prompts → End Chat → Post-Shit." },
+    { "id": "note-2", "page": "page-1", "x": 1880, "y": 0, "w": 300, "text": "Direction — beige and brown.\nWarm paper ground, chocolate fills, a burnt-sienna highlight, clay for the other person. Cards lift off the page by a shade and a hairline. The UI still plays it straight; the copy carries the joke.\n\nType: Bricolage Grotesque (display) · Space Grotesk (UI) · JetBrains Mono (timers, IDs, labels)." },
+    { "id": "note-3", "page": "page-1", "x": 0, "y": 880, "w": 520, "text": "Gender is set once at entry (screen 3) and then surfaces where it matters: as a filter chip on matchmaking, as a tag on the match card, and in the anonymous identity line in chat. Nothing else about a person is ever shown." },
+    { "id": "note-4", "page": "page-1", "x": 0, "y": 1880, "w": 520, "text": "SECONDARY — anonymous stats and the global board. Deliberately not a social profile: no photo, no followers, no bio, a one-tap new identity, and matching preference editable from here." },
+    { "id": "note-5", "page": "page-2", "x": 0, "y": -150, "w": 1330, "text": "Alternates, low-fi. A is the original dark/lime treatment, kept for comparison. B trades the joke for clinical restraint. C goes full meme-poster — louder screenshots, harder to live in day to day." }
   ],
   "launch": { "view": "canvas", "page": "page-1" }
 }

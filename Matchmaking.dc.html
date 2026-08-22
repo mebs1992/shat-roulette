@@ -10,25 +10,25 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap">
   <style>
     :root {
-      --ink: #0E0D0C;
-      --surface: #191716;
-      --surface-2: #221F1D;
-      --line: rgba(242, 237, 228, 0.13);
-      --paper: #F2EDE4;
-      --muted: #948C82;
-      --lime: #C9F04B;
-      --blush: #FF93B6;
+      --beige: #EFE4D2;
+      --surface: #F8F2E6;
+      --surface-2: #E3D6BF;
+      --line: rgba(74,45,20,0.16);
+      --ink: #2B1D12;
+      --muted: #6F5940;
+      --brown: #8A4A18;
+      --clay: #A4553C;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: var(--ink);
-      color: var(--paper);
+      background: var(--beige);
+      color: var(--ink);
       font-family: 'Space Grotesk', 'Helvetica Neue', Helvetica, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
-    a { color: var(--lime); text-decoration: none; }
-    a:hover { color: #DDF97E; }
+    a { color: var(--brown); text-decoration: none; }
+    a:hover { color: #5A3517; }
     .screen {
       width: 390px;
       height: 844px;
@@ -36,8 +36,8 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      background: var(--ink);
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+      background: var(--beige);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
     }
     .mono {
       font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
@@ -80,21 +80,21 @@
 
   <div style="display: flex; align-items: center; justify-content: space-between; min-height: 44px;">
     <div class="eyebrow">Matchmaking</div>
-    <div style="display: flex; align-items: center; gap: 8px; border: 1px solid rgba(242,237,228,0.13); border-radius: 999px; padding: 7px 12px;">
-      <span style="width: 7px; height: 7px; border-radius: 50%; background: #C9F04B; animation: blink 1.4s ease-in-out infinite;"></span>
-      <span class="mono" style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: #B6AEA3;">412 WAITING</span>
+    <div style="display: flex; align-items: center; gap: 8px; border: 1px solid rgba(74,45,20,0.16); border-radius: 999px; padding: 7px 12px;">
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #8A4A18; animation: blink 1.4s ease-in-out infinite;"></span>
+      <span class="mono" style="font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: #5C4632;">412 WAITING</span>
     </div>
   </div>
 
   <div style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px;">
 
     <div style="position: relative; width: 240px; height: 240px; display: flex; align-items: center; justify-content: center;">
-      <span style="position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(201,240,75,0.5); animation: ring 3s ease-out infinite;"></span>
-      <span style="position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(201,240,75,0.5); animation: ring 3s ease-out infinite 1s;"></span>
-      <span style="position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(201,240,75,0.5); animation: ring 3s ease-out infinite 2s;"></span>
-      <span style="position: absolute; width: 168px; height: 168px; border-radius: 50%; background: conic-gradient(from 0deg, rgba(201,240,75,0) 0deg, rgba(201,240,75,0.18) 300deg, rgba(201,240,75,0.55) 360deg); animation: sweep 2.6s linear infinite;"></span>
-      <div style="position: relative; width: 118px; height: 118px; border-radius: 50%; background: #191716; border: 1px solid rgba(242,237,228,0.13); display: flex; align-items: center; justify-content: center;">
-        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#C9F04B" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="animation: bob 2.2s ease-in-out infinite;">
+      <span style="position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(138,74,24,0.55); animation: ring 3s ease-out infinite;"></span>
+      <span style="position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(138,74,24,0.55); animation: ring 3s ease-out infinite 1s;"></span>
+      <span style="position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(138,74,24,0.55); animation: ring 3s ease-out infinite 2s;"></span>
+      <span style="position: absolute; width: 168px; height: 168px; border-radius: 50%; background: conic-gradient(from 0deg, rgba(138,74,24,0) 0deg, rgba(138,74,24,0.20) 300deg, rgba(138,74,24,0.60) 360deg); animation: sweep 2.6s linear infinite;"></span>
+      <div style="position: relative; width: 118px; height: 118px; border-radius: 50%; background: #F8F2E6; border: 1px solid rgba(74,45,20,0.16); display: flex; align-items: center; justify-content: center;">
+        <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#8A4A18" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" style="animation: bob 2.2s ease-in-out infinite;">
           <path d="M7 20.2h10a3 3 0 0 0 .7-5.9 3 3 0 0 0-2.6-5.4A3 3 0 0 0 12.3 3.8 3.4 3.4 0 0 0 8.9 8.9a3 3 0 0 0-2.6 5.4 3 3 0 0 0 .7 5.9Z"/>
         </svg>
       </div>
@@ -102,17 +102,24 @@
 
     <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
       <h1 class="display" style="margin: 0; font-size: 30px; text-align: center; max-width: 300px;">Searching the globe for a fellow shitter…</h1>
-      <p style="margin: 0; font-size: 14px; color: #948C82; text-align: center;">Someone in Lisbon is almost finished. Please hold.</p>
+      <p style="margin: 0; font-size: 14px; color: #6F5940; text-align: center;">Someone in Lisbon is almost finished. Please hold.</p>
     </div>
 
-    <div style="display: flex; align-items: center; gap: 10px; background: #191716; border: 1px solid rgba(242,237,228,0.13); border-radius: 14px; padding: 12px 16px;">
-      <span class="eyebrow" style="letter-spacing: 0.14em;">Your shit</span>
-      <span class="mono" style="font-size: 18px; font-weight: 700; color: #C9F04B;">02:11</span>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 14px;">
+      <div style="display: flex; align-items: center; gap: 10px; background: #F8F2E6; border: 1px solid rgba(74,45,20,0.16); border-radius: 14px; padding: 12px 16px;">
+        <span class="eyebrow" style="letter-spacing: 0.14em;">Your shit</span>
+        <span class="mono" style="font-size: 18px; font-weight: 700; color: #8A4A18;">02:11</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; border: 1px solid rgba(74,45,20,0.20); border-radius: 999px; padding: 9px 14px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6F5940" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16l-6 7v6l-4 2v-8z"/></svg>
+        <span class="mono" style="font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: #5C4632;">WOMEN ONLY · 1,102 WAITING</span>
+      </div>
+      <button style="min-height: 44px; border: none; background: none; padding: 0; color: #8A4A18; font-size: 13px; font-weight: 500; border-bottom: 1px solid rgba(138,74,24,0.45); cursor: pointer;">Taking a while — match me with anyone</button>
     </div>
 
   </div>
 
-  <button style="height: 56px; border: 1px solid rgba(242,237,228,0.16); border-radius: 16px; background: transparent; color: #B6AEA3; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; cursor: pointer;">CANCEL</button>
+  <button style="height: 56px; border: 1px solid rgba(74,45,20,0.20); border-radius: 16px; background: transparent; color: #5C4632; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 16px; cursor: pointer;">CANCEL</button>
 
 </div>
 </x-dc>

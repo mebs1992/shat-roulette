@@ -9,6 +9,7 @@ build() { cat src/_head.html "src/body_$1.html" src/_foot.html > "$2.dc.html"; e
 echo "building artboards:"
 build main        Main
 build confirm     Confirm
+build gender      Gender
 build match       Matchmaking
 build found       MatchFound
 build chat        Chat

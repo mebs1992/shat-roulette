@@ -7,19 +7,29 @@ Live canvas: https://claude.ai/code/artifact/ed504eb8-9a9a-4237-90bb-35c2d4f2a5d
 
 ## Screens
 
-**Core journey** — Home, Confirmation, Matchmaking, Match Found, Shat Chat,
-Conversation Prompts, End Chat, Post-Shit Summary.
+**Core journey** — Home, Confirmation, You & Preference, Matchmaking, Match Found,
+Shat Chat, Conversation Prompts, End Chat, Post-Shit Summary.
 **Secondary** — anonymous Stats, Global Shat Statistics.
-**Alt directions** — two low-fi alternates ("Porcelain Daylight", "Tabloid Chaos")
-against the chosen direction, "Deadpan Dark".
+**Alt directions** — three low-fi alternates: the original dark/lime treatment,
+"Porcelain Daylight" and "Tabloid Chaos".
 
-## Art direction (Deadpan Dark)
+## Art direction (beige & brown)
 
-- Warm near-black `#0E0D0C`, porcelain `#F2EDE4`, one acid-lime accent `#C9F04B`,
-  blush `#FF93B6` for the other party and destructive actions.
+- Beige ground `#EFE4D2`, cards `#F8F2E6`, ink `#2B1D12`, chocolate fills `#6E4220`,
+  burnt-sienna highlight `#8A4A18`, clay `#A4553C` for the other party and
+  destructive actions.
 - Bricolage Grotesque (display) · Space Grotesk (UI) · JetBrains Mono (timers, IDs, labels).
 - Icons are inline SVG, never emoji. Country identity is a mono country code.
 - The interface plays it straight; the copy carries the joke.
+
+## Gender and matching
+
+Gender is set once at entry (screen 3) alongside a matching preference — anyone,
+men, women or non-binary only — with live waiting counts so the cost of filtering
+is visible at the moment of choosing. It resurfaces as a filter chip on
+matchmaking (with a one-tap widen), a tag on the match card, and in the anonymous
+identity line in chat. It is editable from Stats. Nothing else about a person is
+ever shown.
 
 All numbers in the mockups are placeholder sample data.
 
