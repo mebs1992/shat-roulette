@@ -69,7 +69,13 @@ check("correct password accepted",
   (await api("/api/auth/login", { method: "POST", body: JSON.stringify({ email: account.email, password: account.password }) })).status === 200);
 check("signed in again", (await api("/api/auth/account")).body.user?.username === account.username);
 
-console.log("\n6. deleting the account");
+console.log("\n6. no page ever ships a password hash");
+for (const path of ["/", "/stats", "/settings", "/global", "/friends"]) {
+  const html = await (await fetch(BASE + path, { headers: { cookie } })).text();
+  check(`${path} carries no hash`, !html.includes("pbkdf2$"));
+}
+
+console.log("\n7. deleting the account");
 check("deletion accepted", (await api("/api/auth/account", { method: "DELETE" })).status === 200);
 cookie = "";
 check("cannot sign in afterwards",

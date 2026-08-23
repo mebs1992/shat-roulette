@@ -106,10 +106,15 @@ export async function currentUser(): Promise<User | null> {
   const id = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!id) return null;
 
+  // Explicit columns, never SELECT *: the password hash must not ride along on
+  // an object that server components pass around. Login reads it on its own.
   const row = await (await db())
     .prepare(
-      `SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id
-       WHERE s.id = ? AND s.expires_at > ?`,
+      `SELECT u.id, u.username, u.shitmate_num, u.email, u.avatar, u.country, u.created_at,
+              u.total_shits, u.total_shit_ms, u.longest_shit_ms, u.total_shitmates,
+              u.streak_days, u.longest_streak, u.last_shit_day
+         FROM sessions s JOIN users u ON u.id = s.user_id
+        WHERE s.id = ? AND s.expires_at > ?`,
     )
     .bind(id, Date.now())
     .first<User>();
