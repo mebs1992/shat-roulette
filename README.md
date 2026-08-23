@@ -40,6 +40,16 @@ What the lobby enforces: gender-preference matching, longest-wait-first
 queueing, a message rate limit, a maximum message length, mutual blocks that
 never rematch, and structured report logging (visible in `wrangler tail`).
 
+## Tests
+
+```
+npm run realtime     # in one terminal
+npm run test:lobby   # in another
+```
+
+Real websockets against the running lobby — pairing, filtering, rate limits,
+blocks and teardown. Mocking those would only test the mock.
+
 ## Deploying
 
 Two Cloudflare Workers, one repository:

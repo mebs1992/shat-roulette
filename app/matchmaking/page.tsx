@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Mark } from "@/components/Mark";
 import { Funnel } from "@/components/icons";
 import { GENDER_LABEL, useElapsed, useSession } from "@/lib/session";
@@ -42,8 +42,13 @@ export default function MatchmakingPage() {
     if (!gender) router.replace("/preference");
   }, [gender, router]);
 
+  // Once per visit. Strict Mode double-invokes effects, and a second queue
+  // after the server has already paired us is worse than useless.
+  const hasQueued = useRef(false);
   useEffect(() => {
-    if (connection === "online" && gender) queue();
+    if (connection !== "online" || !gender || hasQueued.current) return;
+    hasQueued.current = true;
+    queue();
   }, [connection, gender, queue]);
 
   useEffect(() => {

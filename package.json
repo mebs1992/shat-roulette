@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p worker/tsconfig.json",
     "app:build": "opennextjs-cloudflare build",
     "app:preview": "opennextjs-cloudflare preview",
-    "app:deploy": "opennextjs-cloudflare deploy"
+    "app:deploy": "opennextjs-cloudflare deploy",
+    "test:lobby": "node test/lobby.test.mjs"
   },
   "dependencies": {
     "next": "^15.5.23",

@@ -120,7 +120,11 @@ export class Lobby implements DurableObject {
       }
 
       case "queue": {
-        if (client.state === "paired") this.partClient(client, "leave");
+        // Leaving is always explicit (leave / block / report), so a queue from
+        // a client we already paired is an accident — a re-fired effect, a
+        // reconnect, a double tap. It used to tear down the live chat and tell
+        // the other person they had been left. Ignore it instead.
+        if (client.state === "paired") return;
         client.state = "queued";
         client.queuedAt = Date.now();
         this.tryPair(client);
