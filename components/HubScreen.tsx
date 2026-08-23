@@ -9,6 +9,7 @@ export type HubData = {
   longestShitLabel: string;
   totalShitLabel: string;
   friendsShitting: number;
+  friendsAround: number;
   friendRequests: number;
 };
 
@@ -55,7 +56,9 @@ export function HubScreen({ data }: { data: HubData }) {
               ? `${data.friendRequests} waiting on you`
               : data.friendsShitting > 0
                 ? `${data.friendsShitting} shitting now`
-                : "Nobody in there"
+                : data.friendsAround > 0
+                  ? `${data.friendsAround} around`
+                  : "Nobody in there"
           }
           highlight={data.friendRequests > 0 || data.friendsShitting > 0}
         />

@@ -81,15 +81,21 @@ bobsList = (await (await api(bob, "/api/friends")).json()).friends;
 check("both sides now accepted", alicesList[0]?.state === "accepted" && bobsList[0]?.state === "accepted");
 check("alice sees bob's username", alicesList[0]?.username === bob.username);
 
-console.log("\n4. presence");
-check("bob is not shitting yet", alicesList[0]?.shittingNow === false);
-await api(bob, "/api/shit/start", { method: "POST" });
+console.log("\n4. presence: offline, available, shitting");
+// Bob signed up but has never sent a heartbeat.
+check("bob starts offline", alicesList[0]?.presence === "offline", alicesList[0]?.presence);
+
+await api(bob, "/api/presence", { method: "POST" });
 let refreshed = (await (await api(alice, "/api/friends")).json()).friends;
-check("alice sees bob shitting", refreshed[0]?.shittingNow === true);
+check("a heartbeat makes bob available", refreshed[0]?.presence === "available", refreshed[0]?.presence);
+
+await api(bob, "/api/shit/start", { method: "POST" });
+refreshed = (await (await api(alice, "/api/friends")).json()).friends;
+check("shitting outranks available", refreshed[0]?.presence === "shitting", refreshed[0]?.presence);
 
 await api(bob, "/api/shit", { method: "POST", body: JSON.stringify({ startedAt: Date.now() - 60_000, day: new Date().toISOString().slice(0, 10) }) });
 refreshed = (await (await api(alice, "/api/friends")).json()).friends;
-check("finishing clears presence", refreshed[0]?.shittingNow === false);
+check("finishing drops him back to available", refreshed[0]?.presence === "available", refreshed[0]?.presence);
 
 console.log("\n5. removing");
 await api(alice, "/api/friends", { method: "DELETE", body: JSON.stringify({ id: alicesList[0].id }) });

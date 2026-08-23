@@ -27,7 +27,8 @@ export default async function HomePage() {
           totalShitmates: user.total_shitmates,
           totalShitLabel: user.total_shit_ms ? formatTotal(user.total_shit_ms) : "—",
           longestShitLabel: user.longest_shit_ms ? formatDuration(user.longest_shit_ms) : "—",
-          friendsShitting: friends.filter((f) => f.state === "accepted" && f.shittingNow).length,
+          friendsShitting: friends.filter((f) => f.state === "accepted" && f.presence === "shitting").length,
+          friendsAround: friends.filter((f) => f.state === "accepted" && f.presence === "available").length,
           friendRequests: friends.filter((f) => f.state === "incoming").length,
         }}
       />

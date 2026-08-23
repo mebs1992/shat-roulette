@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { FontStylesheet } from "@/components/FontStylesheet";
+import { Heartbeat } from "@/components/Heartbeat";
 import { SessionProvider } from "@/lib/session";
 import "./globals.css";
 
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <FontStylesheet href={FONTS} />
+        <Heartbeat />
         <SessionProvider>{children}</SessionProvider>
       </body>
     </html>

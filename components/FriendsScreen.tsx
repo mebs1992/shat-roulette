@@ -37,7 +37,8 @@ export function FriendsScreen({ friends: initial }: { friends: Friend[] }) {
   const incoming = friends.filter((f) => f.state === "incoming");
   const accepted = friends.filter((f) => f.state === "accepted");
   const pending = friends.filter((f) => f.state === "pending");
-  const shitting = accepted.filter((f) => f.shittingNow).length;
+  const shitting = accepted.filter((f) => f.presence === "shitting").length;
+  const available = accepted.filter((f) => f.presence === "available").length;
 
   return (
     <main className="screen">
@@ -68,7 +69,9 @@ export function FriendsScreen({ friends: initial }: { friends: Friend[] }) {
           </span>
         </div>
         <div style={{ flexGrow: 1 }} />
-        <span className="mono" style={{ fontSize: 11, color: "var(--muted)", letterSpacing: "0.08em" }}>
+        <span className="mono" style={{ fontSize: 11, color: "var(--muted)", letterSpacing: "0.08em", textAlign: "right" }}>
+          {available} AROUND
+          <br />
           {accepted.length} TOTAL
         </span>
       </div>
@@ -170,12 +173,42 @@ function Row({ friend, children }: { friend: Friend; children: React.ReactNode }
         borderTop: "1px solid var(--line-soft)",
       }}
     >
+      <span
+        aria-hidden
+        style={{
+          width: 8,
+          height: 8,
+          flexShrink: 0,
+          borderRadius: "50%",
+          background:
+            friend.presence === "shitting"
+              ? "var(--highlight)"
+              : friend.presence === "available"
+                ? "var(--clay)"
+                : "transparent",
+          border: friend.presence === "offline" ? "1px solid var(--line-strong)" : "none",
+          animation: friend.presence === "shitting" ? "blink 1.6s ease-in-out infinite" : undefined,
+        }}
+      />
       <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
         <span style={{ fontSize: 15, fontWeight: 500 }}>{friend.username}</span>
-        <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: friend.shittingNow ? "var(--highlight)" : "var(--faint)" }}>
-          {friend.shittingNow ? "SHITTING NOW" : `#${friend.shitmateNum}`}
+        <span
+          className="mono"
+          style={{
+            fontSize: 10,
+            letterSpacing: "0.08em",
+            color:
+              friend.presence === "shitting"
+                ? "var(--highlight)"
+                : friend.presence === "available"
+                  ? "var(--clay)"
+                  : "var(--faint)",
+          }}
+        >
+          {friend.presence === "shitting" ? "SHITTING NOW" : friend.presence === "available" ? "AROUND" : "OFFLINE"}
+          {` · #${friend.shitmateNum}`}
           {friend.country ? ` · ${friend.country}` : ""}
-          {friend.streakDays > 0 ? ` · ${friend.streakDays}D STREAK` : ""}
+          {friend.streakDays > 0 ? ` · ${friend.streakDays}D` : ""}
         </span>
       </div>
       <div style={{ display: "flex", gap: 8 }}>{children}</div>

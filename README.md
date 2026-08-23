@@ -163,6 +163,11 @@ redeploys the worker automatically.
 | `/global` | Global shat statistics |
 | `/friends` | Shitty friends — requests, presence, removal |
 
+Friends have three presence states: **shitting** (a shit is in progress),
+**available** (the app was open in the last five minutes) and **offline**.
+A heartbeat from the open tab drives the middle one, and pauses when the tab is
+hidden so a forgotten tab does not leave someone permanently "around".
+
 Signed in, `/` is a hub: your counters, everything else reachable, one action.
 Signed out it is the pitch. Friends are added with a token the lobby issues to
 both sides when they match, so nobody can befriend an account they never met.
