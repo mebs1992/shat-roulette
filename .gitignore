@@ -11,3 +11,7 @@ next-env.d.ts
 # cloudflare build output
 .open-next/
 .wrangler/
+
+# local secrets
+.dev.vars
+worker/.dev.vars

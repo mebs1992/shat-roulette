@@ -1,4 +1,4 @@
-import { DEV_SECRET, FRIEND_TOKEN_TTL_MS, mintFriendToken, readTicket } from "../shared/ticket";
+import { FRIEND_TOKEN_TTL_MS, mintFriendToken, readTicket } from "../shared/ticket";
 import {
   MAX_MESSAGE_LENGTH,
   RATE_LIMIT,
@@ -58,9 +58,11 @@ export class Lobby implements DurableObject {
   private readonly ticketSecret: string;
 
   constructor(_state: DurableObjectState, env: Env) {
-    this.ticketSecret = env.LOBBY_TICKET_SECRET ?? DEV_SECRET;
-    if (!env.LOBBY_TICKET_SECRET) {
-      console.warn("LOBBY_TICKET_SECRET is unset — using the development secret. Do not launch like this.");
+    // No fallback: an unset secret means every ticket is refused (fail closed),
+    // never accepted against a secret an attacker could read in the repo.
+    this.ticketSecret = env.LOBBY_TICKET_SECRET ?? "";
+    if (!this.ticketSecret) {
+      console.error("LOBBY_TICKET_SECRET is unset — the lobby will refuse all connections.");
     }
   }
   /** Kept only so a report can carry context. Dropped when the pair ends. */
@@ -232,7 +234,7 @@ export class Lobby implements DurableObject {
 
   /** Verifies a ticket and adopts the account identity it carries. */
   private async identify(client: Client, ticket: string, gender: Gender, preference: Preference) {
-    const payload = await readTicket(ticket, this.ticketSecret);
+    const payload = this.ticketSecret ? await readTicket(ticket, this.ticketSecret) : null;
     if (!payload) {
       this.send(client, { t: "error", code: "unauthenticated" });
       return;

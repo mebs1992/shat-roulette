@@ -60,6 +60,27 @@ await wait(500);
 check("a forged ticket is refused", stranger.of("error").filter((e) => e.code === "unauthenticated").length >= 2);
 check("no identity was granted", stranger.of("identified").length === 0);
 
+console.log("\n1b. a ticket signed with the OLD published dev secret is refused");
+{
+  const b64 = (b) => Buffer.from(b).toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const oldSecret = "dev-only-lobby-secret-set-LOBBY_TICKET_SECRET-before-launch";
+  const payload = b64(Buffer.from(JSON.stringify({ u: "attacker", n: 99999, exp: Date.now() + 300000 })));
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(oldSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
+  const forged = `${payload}.${b64(Buffer.from(new Uint8Array(sig)))}`;
+
+  const raw = new WebSocket(LOBBY);
+  const got = [];
+  raw.onmessage = (e) => got.push(JSON.parse(e.data));
+  await new Promise((resolve, reject) => { raw.onopen = resolve; raw.onerror = reject; });
+  raw.send(JSON.stringify({ t: "hello", ticket: forged, gender: "man", preference: "anyone" }));
+  await wait(600);
+  const rejected = got.some((m) => m.t === "error" && m.code === "unauthenticated");
+  const identified = got.some((m) => m.t === "identified");
+  check("forged dev-secret ticket rejected", rejected && !identified);
+  raw.close();
+}
+
 console.log("\n2. real accounts are identified by their ticket");
 const alice = await makeAccount("a");
 const bob = await makeAccount("b");

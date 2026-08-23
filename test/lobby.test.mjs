@@ -12,7 +12,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 // Mirrors shared/ticket.ts. Signing here keeps this suite standalone — it
 // tests the lobby's rules, not the app's session handling.
 const SECRET = process.env.LOBBY_TICKET_SECRET
-  ?? "dev-only-lobby-secret-set-LOBBY_TICKET_SECRET-before-launch";
+  ?? process.env.LOBBY_TICKET_SECRET;
 
 const base64url = (bytes) =>
   btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");

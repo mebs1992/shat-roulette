@@ -103,12 +103,18 @@ permissions the agent has.
 
 ## Before launch
 
-- [ ] `wrangler secret put LOBBY_TICKET_SECRET` on **both** Workers, with the
-      same value. Until then both fall back to a known development secret and
-      log a warning — anyone could mint a ticket for any account.
+- [ ] **REQUIRED — `wrangler secret put LOBBY_TICKET_SECRET` on BOTH Workers,
+      same value** (generate with `openssl rand -hex 32`). There is no fallback:
+      without it the app refuses to issue lobby tickets and the lobby refuses
+      every connection, so chat is down until it is set. This is deliberate —
+      a shared secret baked into the source would let anyone forge a ticket for
+      any account. For local development it is read from `.dev.vars` (gitignored).
 - [ ] Google sign-in credentials
 - [ ] Terms, privacy policy and an age gate
 - [ ] Somewhere for reports to land that a human actually reads
+- [ ] Rate limiting on `/api/auth/login` and `/api/auth/signup` (brute-force and
+      account-enumeration mitigation) — needs shared state (D1 or a Durable Object)
+- [ ] Email verification, which also closes signup email-enumeration
 
 ## Deploying
 

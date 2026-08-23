@@ -33,12 +33,10 @@ export type FriendTokenPayload = {
   exp: number;
 };
 
-/**
- * Used only when LOBBY_TICKET_SECRET is unset, which must never be the case in
- * production — see the launch checklist in the README. Both sides log when
- * they fall back to it.
- */
-export const DEV_SECRET = "dev-only-lobby-secret-set-LOBBY_TICKET_SECRET-before-launch";
+// There is deliberately NO hardcoded fallback secret. A shared secret baked
+// into the source is not a secret. If LOBBY_TICKET_SECRET is unset, the app
+// refuses to mint tickets and the lobby refuses to accept them — fail closed,
+// never fall back to something an attacker could read in the repo.
 
 function base64url(bytes: Uint8Array): string {
   let binary = "";
