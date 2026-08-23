@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sameOrigin } from "@/lib/csrf";
 import { currentUser } from "@/lib/auth";
 import { db, env } from "@/lib/db";
 import { listFriends } from "@/lib/friends";
@@ -12,6 +13,7 @@ export async function GET() {
 
 /** Adds the person you just chatted with, proven by the lobby's token. */
 export async function POST(request: Request) {
+  if (!sameOrigin(request)) return NextResponse.json({ error: "Bad request." }, { status: 403 });
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 
@@ -63,6 +65,7 @@ export async function POST(request: Request) {
 
 /** Removes a friendship in both directions, or declines a request. */
 export async function DELETE(request: Request) {
+  if (!sameOrigin(request)) return NextResponse.json({ error: "Bad request." }, { status: 403 });
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 

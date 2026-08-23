@@ -8,8 +8,15 @@ import {
   validatePassword,
   validateUsername,
 } from "@/lib/auth";
+import { SIGNUP_LIMIT, clientIp, rateLimit } from "@/lib/ratelimit";
+import { sameOrigin } from "@/lib/csrf";
 
 export async function POST(request: Request) {
+  if (!sameOrigin(request)) return NextResponse.json({ error: "Bad request." }, { status: 403 });
+  if (!(await rateLimit("signup", clientIp(request), SIGNUP_LIMIT))) {
+    return NextResponse.json({ error: "Too many attempts. Wait a bit." }, { status: 429 });
+  }
+
   const body = (await request.json().catch(() => null)) as
     | { username?: string; email?: string; password?: string }
     | null;

@@ -112,8 +112,8 @@ permissions the agent has.
 - [ ] Google sign-in credentials
 - [ ] Terms, privacy policy and an age gate
 - [ ] Somewhere for reports to land that a human actually reads
-- [ ] Rate limiting on `/api/auth/login` and `/api/auth/signup` (brute-force and
-      account-enumeration mitigation) — needs shared state (D1 or a Durable Object)
+- [x] Rate limiting on `/api/auth/login` and `/api/auth/signup` — D1-backed,
+      keyed by Cloudflare's client IP. Also blunts signup enumeration probing.
 - [ ] Email verification, which also closes signup email-enumeration
 
 ## Deploying

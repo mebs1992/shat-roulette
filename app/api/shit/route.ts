@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sameOrigin } from "@/lib/csrf";
 import { currentUser, newId } from "@/lib/auth";
 import { db } from "@/lib/db";
 
@@ -21,6 +22,7 @@ function previousDay(day: string): string {
 
 /** Records a finished shit and rolls the user's lifetime counters forward. */
 export async function POST(request: Request) {
+  if (!sameOrigin(request)) return NextResponse.json({ error: "Bad request." }, { status: 403 });
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 

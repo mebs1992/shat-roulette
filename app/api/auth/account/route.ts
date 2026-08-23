@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sameOrigin } from "@/lib/csrf";
 import { db } from "@/lib/db";
 import { currentUser, destroySession, publicName } from "@/lib/auth";
 
@@ -24,7 +25,8 @@ export async function GET() {
 }
 
 /** Account deletion. Sessions and oauth links cascade; nothing else refers to a user yet. */
-export async function DELETE() {
+export async function DELETE(request: Request) {
+  if (!sameOrigin(request)) return NextResponse.json({ error: "Bad request." }, { status: 403 });
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 

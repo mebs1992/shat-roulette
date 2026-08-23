@@ -6,6 +6,8 @@
  */
 
 const APP = process.env.APP_URL ?? "http://localhost:3000";
+// Unique per run so the auth rate limiter buckets each suite separately.
+const TEST_IP = `203.0.113.${Math.floor(Math.random() * 250) + 1}`;
 let pass = 0, fail = 0;
 const check = (label, ok, detail = "") => {
   ok ? pass++ : fail++;
@@ -16,7 +18,7 @@ let cookie = "";
 async function api(path, init = {}) {
   const response = await fetch(APP + path, {
     ...init,
-    headers: { "content-type": "application/json", ...(cookie ? { cookie } : {}), ...(init.headers ?? {}) },
+    headers: { "content-type": "application/json", "cf-connecting-ip": TEST_IP, ...(cookie ? { cookie } : {}), ...(init.headers ?? {}) },
   });
   const setCookie = response.headers.get("set-cookie");
   if (setCookie) cookie = setCookie.split(";")[0];

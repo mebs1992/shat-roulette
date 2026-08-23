@@ -1,8 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createSession, verifyPassword } from "@/lib/auth";
+import { LOGIN_LIMIT, clientIp, rateLimit } from "@/lib/ratelimit";
+import { sameOrigin } from "@/lib/csrf";
 
 export async function POST(request: Request) {
+  if (!sameOrigin(request)) return NextResponse.json({ error: "Bad request." }, { status: 403 });
+  if (!(await rateLimit("login", clientIp(request), LOGIN_LIMIT))) {
+    return NextResponse.json({ error: "Too many attempts. Wait a bit." }, { status: 429 });
+  }
+
   const body = (await request.json().catch(() => null)) as { email?: string; password?: string } | null;
   const email = (body?.email ?? "").trim().toLowerCase();
   const password = body?.password ?? "";

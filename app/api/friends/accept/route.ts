@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { sameOrigin } from "@/lib/csrf";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 /** Accepts an incoming request from someone you were matched with. */
 export async function POST(request: Request) {
+  if (!sameOrigin(request)) return NextResponse.json({ error: "Bad request." }, { status: 403 });
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
 

@@ -5,6 +5,8 @@
  */
 
 const APP = process.env.APP_URL ?? "http://localhost:3000";
+// Unique per run so the auth rate limiter buckets each suite separately.
+const TEST_IP = `203.0.113.${Math.floor(Math.random() * 250) + 1}`;
 let pass = 0, fail = 0;
 const check = (label, ok, detail = "") => {
   ok ? pass++ : fail++;
@@ -15,7 +17,7 @@ async function account(tag) {
   const stamp = `${Date.now().toString(36)}_${tag}`;
   const response = await fetch(`${APP}/api/auth/signup`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", "cf-connecting-ip": TEST_IP },
     body: JSON.stringify({ username: `l_${stamp}`, email: `l_${stamp}@example.com`, password: "correcthorsebattery" }),
   });
   const body = await response.json();
@@ -29,7 +31,7 @@ async function account(tag) {
 const post = (who, path, payload) =>
   fetch(APP + path, {
     method: "POST",
-    headers: { "content-type": "application/json", cookie: who.cookie },
+    headers: { "content-type": "application/json", "cf-connecting-ip": TEST_IP, cookie: who.cookie },
     body: payload === undefined ? undefined : JSON.stringify(payload),
   });
 
