@@ -81,6 +81,20 @@ bindings — mocking those would only test the mock:
 | `test:lobby-auth` | ticket minting and verification, forged tickets, self-matching |
 | `test:shit` | durations, counters, streak rules, clamping, refusing rubbish |
 
+## Cloudflare skills
+
+`.agents/skills` holds Cloudflare's own skill pack (wrangler, Workers best
+practices, Durable Objects and the rest), installed per Cloudflare's agent
+setup. They are committed rather than installed globally so any session working
+on this repository picks them up. Refresh with:
+
+```
+npx -y skills add cloudflare/skills --skill '*' --yes
+```
+
+Note that a couple of them ship shell scripts, which run with whatever
+permissions the agent has.
+
 ## Before launch
 
 - [ ] `wrangler secret put LOBBY_TICKET_SECRET` on **both** Workers, with the
