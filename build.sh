@@ -18,3 +18,4 @@ build end         EndChat
 build summary     Summary
 build profile     Profile
 build board       Leaderboard
+build logosheet   LogoSheet

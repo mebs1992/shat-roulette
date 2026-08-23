@@ -13,6 +13,15 @@ Shat Chat, Conversation Prompts, End Chat, Post-Shit Summary.
 **Alt directions** — three low-fi alternates: the original dark/lime treatment,
 "Porcelain Daylight" and "Tabloid Chaos".
 
+## The mark
+
+A toilet seat and a roulette wheel are the same shape. The outer ring is a seat,
+broken at the front the way a real one is; inside it sit eight wedges, a hub and
+a ball. One form carrying both halves of the name. It is pure SVG in
+`currentColor`, so it recolors and scales anywhere — 24px is the practical floor,
+below which the wedges close up. The brand sheet (`LogoSheet.dc.html`) carries
+the lockups, app icons, size test, palette, and the two marks that lost.
+
 ## Art direction (beige & brown)
 
 - Beige ground `#EFE4D2`, cards `#F8F2E6`, ink `#2B1D12`, chocolate fills `#6E4220`,
@@ -40,7 +49,7 @@ All numbers in the mockups are placeholder sample data.
 - `canvas.json` — artboard positions, pages and sticky notes for the canvas.
 - `src/` — shared head/foot plus one body per screen; single source of truth for
   the shared CSS.
-- `build.sh` — recomposes the ten journey artboards from `src/`. Run it after
+- `build.sh` — recomposes the journey artboards and the brand sheet from `src/`. Run it after
   editing anything in `src/`; edits made directly to a generated `*.dc.html`
   (including ones exported back out of the canvas editor) will be overwritten.
 - `shat-roulette-screens.html` — the published canvas, reseeded from the artboards.

@@ -1,30 +1,203 @@
 {
   "pages": [
-    { "id": "page-1", "name": "Core Journey" },
-    { "id": "page-2", "name": "Alt Directions" }
+    {
+      "id": "page-1",
+      "name": "Core Journey"
+    },
+    {
+      "id": "page-2",
+      "name": "Alt Directions"
+    }
   ],
   "artboards": [
-    { "file": "Main.dc.html",         "title": "1 · Home",             "page": "page-1", "x": 0,    "y": 0,    "w": 390, "h": 844 },
-    { "file": "Confirm.dc.html",      "title": "2 · Confirmation",     "page": "page-1", "x": 470,  "y": 0,    "w": 390, "h": 844 },
-    { "file": "Gender.dc.html",       "title": "3 · You & Preference", "page": "page-1", "x": 940,  "y": 0,    "w": 390, "h": 844 },
-    { "file": "Matchmaking.dc.html",  "title": "4 · Matchmaking",      "page": "page-1", "x": 1410, "y": 0,    "w": 390, "h": 844 },
-    { "file": "MatchFound.dc.html",   "title": "5 · Match Found",      "page": "page-1", "x": 0,    "y": 1000, "w": 390, "h": 844 },
-    { "file": "Chat.dc.html",         "title": "6 · Shat Chat",        "page": "page-1", "x": 470,  "y": 1000, "w": 390, "h": 844 },
-    { "file": "Prompts.dc.html",      "title": "7 · Prompts",          "page": "page-1", "x": 940,  "y": 1000, "w": 390, "h": 844 },
-    { "file": "EndChat.dc.html",      "title": "8 · End Chat",         "page": "page-1", "x": 1410, "y": 1000, "w": 390, "h": 844 },
-    { "file": "Summary.dc.html",      "title": "9 · Post-Shit",        "page": "page-1", "x": 0,    "y": 2000, "w": 390, "h": 844 },
-    { "file": "Profile.dc.html",      "title": "10 · Stats",           "page": "page-1", "x": 470,  "y": 2000, "w": 390, "h": 844 },
-    { "file": "Leaderboard.dc.html",  "title": "11 · Global",          "page": "page-1", "x": 940,  "y": 2000, "w": 390, "h": 844 },
-    { "file": "DirectionPorcelain.dc.html", "title": "Alt B · Porcelain Daylight", "page": "page-2", "x": 0,   "y": 0, "w": 390, "h": 844 },
-    { "file": "DirectionTabloid.dc.html",   "title": "Alt C · Tabloid Chaos",      "page": "page-2", "x": 470, "y": 0, "w": 390, "h": 844 },
-    { "file": "HomeDark.dc.html",           "title": "Alt A · The dark/lime one",  "page": "page-2", "x": 940, "y": 0, "w": 390, "h": 844 }
+    {
+      "file": "LogoSheet.dc.html",
+      "title": "Brand \u00b7 The mark",
+      "page": "page-1",
+      "x": -960,
+      "y": 0,
+      "w": 880,
+      "h": 860
+    },
+    {
+      "file": "Main.dc.html",
+      "title": "1 \u00b7 Home",
+      "page": "page-1",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Confirm.dc.html",
+      "title": "2 \u00b7 Confirmation",
+      "page": "page-1",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Gender.dc.html",
+      "title": "3 \u00b7 You & Preference",
+      "page": "page-1",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Matchmaking.dc.html",
+      "title": "4 \u00b7 Matchmaking",
+      "page": "page-1",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "MatchFound.dc.html",
+      "title": "5 \u00b7 Match Found",
+      "page": "page-1",
+      "x": 0,
+      "y": 1000,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Chat.dc.html",
+      "title": "6 \u00b7 Shat Chat",
+      "page": "page-1",
+      "x": 470,
+      "y": 1000,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Prompts.dc.html",
+      "title": "7 \u00b7 Prompts",
+      "page": "page-1",
+      "x": 940,
+      "y": 1000,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "EndChat.dc.html",
+      "title": "8 \u00b7 End Chat",
+      "page": "page-1",
+      "x": 1410,
+      "y": 1000,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Summary.dc.html",
+      "title": "9 \u00b7 Post-Shit",
+      "page": "page-1",
+      "x": 0,
+      "y": 2000,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Profile.dc.html",
+      "title": "10 \u00b7 Stats",
+      "page": "page-1",
+      "x": 470,
+      "y": 2000,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Leaderboard.dc.html",
+      "title": "11 \u00b7 Global",
+      "page": "page-1",
+      "x": 940,
+      "y": 2000,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "DirectionPorcelain.dc.html",
+      "title": "Alt B \u00b7 Porcelain Daylight",
+      "page": "page-2",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "DirectionTabloid.dc.html",
+      "title": "Alt C \u00b7 Tabloid Chaos",
+      "page": "page-2",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "HomeDark.dc.html",
+      "title": "Alt A \u00b7 The dark/lime one",
+      "page": "page-2",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    }
   ],
   "annotations": [
-    { "id": "note-1", "page": "page-1", "x": 0, "y": -150, "w": 520, "text": "CORE JOURNEY — read left to right, top to bottom.\nHome → Confirm → You & preference → Matchmaking → Match Found → Chat → Prompts → End Chat → Post-Shit." },
-    { "id": "note-2", "page": "page-1", "x": 1880, "y": 0, "w": 300, "text": "Direction — beige and brown.\nWarm paper ground, chocolate fills, a burnt-sienna highlight, clay for the other person. Cards lift off the page by a shade and a hairline. The UI still plays it straight; the copy carries the joke.\n\nType: Bricolage Grotesque (display) · Space Grotesk (UI) · JetBrains Mono (timers, IDs, labels)." },
-    { "id": "note-3", "page": "page-1", "x": 0, "y": 880, "w": 520, "text": "Gender is set once at entry (screen 3) and then surfaces where it matters: as a filter chip on matchmaking, as a tag on the match card, and in the anonymous identity line in chat. Nothing else about a person is ever shown." },
-    { "id": "note-4", "page": "page-1", "x": 0, "y": 1880, "w": 520, "text": "SECONDARY — anonymous stats and the global board. Deliberately not a social profile: no photo, no followers, no bio, a one-tap new identity, and matching preference editable from here." },
-    { "id": "note-5", "page": "page-2", "x": 0, "y": -150, "w": 1330, "text": "Alternates, low-fi. A is the original dark/lime treatment, kept for comparison. B trades the joke for clinical restraint. C goes full meme-poster — louder screenshots, harder to live in day to day." }
+    {
+      "id": "note-1",
+      "page": "page-1",
+      "x": 0,
+      "y": -150,
+      "w": 520,
+      "text": "CORE JOURNEY \u2014 read left to right, top to bottom.\nHome \u2192 Confirm \u2192 You & preference \u2192 Matchmaking \u2192 Match Found \u2192 Chat \u2192 Prompts \u2192 End Chat \u2192 Post-Shit."
+    },
+    {
+      "id": "note-2",
+      "page": "page-1",
+      "x": 1880,
+      "y": 0,
+      "w": 300,
+      "text": "Direction \u2014 beige and brown.\nWarm paper ground, chocolate fills, a burnt-sienna highlight, clay for the other person. Cards lift off the page by a shade and a hairline. The UI plays it straight; the copy carries the joke.\n\nType: Bricolage Grotesque (display) \u00b7 Space Grotesk (UI) \u00b7 JetBrains Mono (timers, IDs, labels)."
+    },
+    {
+      "id": "note-3",
+      "page": "page-1",
+      "x": 0,
+      "y": 880,
+      "w": 520,
+      "text": "Gender is set once at entry (screen 3) and then surfaces where it matters: as a filter chip on matchmaking, as a tag on the match card, and in the anonymous identity line in chat. Nothing else about a person is ever shown."
+    },
+    {
+      "id": "note-4",
+      "page": "page-1",
+      "x": 0,
+      "y": 1880,
+      "w": 520,
+      "text": "SECONDARY \u2014 anonymous stats and the global board. Deliberately not a social profile: no photo, no followers, no bio, a one-tap new identity, and matching preference editable from here."
+    },
+    {
+      "id": "note-5",
+      "page": "page-2",
+      "x": 0,
+      "y": -150,
+      "w": 1330,
+      "text": "Alternates, low-fi. A is the original dark/lime treatment, kept for comparison. B trades the joke for clinical restraint. C goes full meme-poster \u2014 louder screenshots, harder to live in day to day."
+    },
+    {
+      "id": "note-6",
+      "page": "page-1",
+      "x": -960,
+      "y": -150,
+      "w": 880,
+      "text": "THE MARK \u2014 one form carrying both halves of the name: a broken seat ring outside, a segmented wheel and ball inside. It replaces the placeholder swirl everywhere it appeared, and now leads the home screen."
+    }
   ],
-  "launch": { "view": "canvas", "page": "page-1" }
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  }
 }
