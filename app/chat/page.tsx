@@ -3,15 +3,25 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Block, Bubble, Close, Dots, Flag, Send, Shuffle } from "@/components/icons";
-import { GENDER_LABEL, PROMPTS, formatDuration, useElapsed, useSession } from "@/lib/session";
+import {
+  GENDER_LABEL,
+  PROMPTS,
+  formatDuration,
+  useElapsed,
+  useSession,
+  type EndReason,
+} from "@/lib/session";
 
 const SILENCE_MS = 40_000;
 
 export default function ChatPage() {
   const router = useRouter();
-  const { match, messages, theyAreTyping, sendMessage, endChat, shitStartedAt, chatStartedAt } = useSession();
+  const {
+    match, partnerStartedAt, messages, theyAreTyping, partnerLeft, notice, connection,
+    sendMessage, setTyping, endChat, shitStartedAt, chatStartedAt,
+  } = useSession();
   const mine = useElapsed(shitStartedAt);
-  const theirs = useElapsed(match?.startedAt ?? null);
+  const theirs = useElapsed(partnerStartedAt);
 
   const [draft, setDraft] = useState("");
   const [tray, setTray] = useState(false);
@@ -22,6 +32,7 @@ export default function ChatPage() {
   const [leaving, setLeaving] = useState(false);
 
   const listRef = useRef<HTMLDivElement>(null);
+  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastActivity = messages.length ? messages[messages.length - 1].at : chatStartedAt;
 
   // Bounce back to matchmaking if there is no match — but not while we are
@@ -32,38 +43,55 @@ export default function ChatPage() {
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length, theyAreTyping, tray]);
+  }, [messages.length, theyAreTyping, tray, partnerLeft]);
 
   // Prompts surface themselves only after a genuinely awkward pause.
   useEffect(() => {
-    if (!lastActivity || traySuppressed) return;
+    if (!lastActivity || traySuppressed || partnerLeft) return;
     const id = setInterval(() => {
       const quiet = Date.now() - lastActivity > SILENCE_MS;
       setSilent(quiet);
       if (quiet) setTray(true);
     }, 2000);
     return () => clearInterval(id);
-  }, [lastActivity, traySuppressed]);
+  }, [lastActivity, partnerLeft, traySuppressed]);
+
+  useEffect(
+    () => () => {
+      if (typingTimer.current) clearTimeout(typingTimer.current);
+    },
+    [],
+  );
 
   const prompts = useMemo(() => {
-    const rotated = [...PROMPTS.slice(promptSeed % PROMPTS.length), ...PROMPTS.slice(0, promptSeed % PROMPTS.length)];
-    return rotated.slice(0, 4);
+    const offset = promptSeed % PROMPTS.length;
+    return [...PROMPTS.slice(offset), ...PROMPTS.slice(0, offset)].slice(0, 4);
   }, [promptSeed]);
 
   if (!match) return <main className="screen" />;
 
+  function type(value: string) {
+    setDraft(value);
+    setTyping(true);
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => setTyping(false), 1200);
+  }
+
   function send(text: string) {
     sendMessage(text);
+    setTyping(false);
     setDraft("");
     setSilent(false);
     setTray(false);
   }
 
-  function finish(next: "again" | "done") {
+  function finish(next: "again" | "done", reason: EndReason = "leave") {
     setLeaving(true);
-    endChat();
+    endChat(reason);
     router.push(next === "again" ? "/matchmaking" : "/summary");
   }
+
+  const offline = connection !== "online";
 
   return (
     <main className="screen screen--flush" style={{ height: "100dvh" }}>
@@ -81,7 +109,7 @@ export default function ChatPage() {
           </button>
           <div style={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, minWidth: 0 }}>
             <div style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: 16, letterSpacing: "-0.01em" }}>
-              Shitmate #{match.id}
+              Shitmate #{match.num}
             </div>
             <div className="mono" style={{ fontSize: 10, letterSpacing: "0.1em", color: "var(--muted)" }}>
               {GENDER_LABEL[match.gender].toUpperCase()} · {match.country} · ANONYMOUS
@@ -116,16 +144,26 @@ export default function ChatPage() {
         </div>
       </header>
 
+      {offline && (
+        <div
+          className="mono"
+          style={{
+            background: "rgba(164,85,60,0.14)",
+            color: "var(--clay)",
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textAlign: "center",
+            padding: "8px 16px",
+          }}
+        >
+          RECONNECTING — MESSAGES WON&apos;T SEND
+        </div>
+      )}
+
       <div
         ref={listRef}
-        style={{
-          flexGrow: 1,
-          overflowY: "auto",
-          padding: "18px 16px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 10,
-        }}
+        style={{ flexGrow: 1, overflowY: "auto", padding: "18px 16px", display: "flex", flexDirection: "column", gap: 10 }}
       >
         <div style={{ flexGrow: 1, minHeight: 0 }} />
 
@@ -173,7 +211,7 @@ export default function ChatPage() {
           ),
         )}
 
-        {theyAreTyping && (
+        {theyAreTyping && !partnerLeft && (
           <>
             <div
               style={{
@@ -208,7 +246,7 @@ export default function ChatPage() {
           </>
         )}
 
-        {silent && !tray && (
+        {silent && !tray && !partnerLeft && (
           <div
             className="mono"
             style={{ textAlign: "center", fontSize: 10, letterSpacing: "0.1em", color: "var(--faint)", padding: "6px 0" }}
@@ -216,9 +254,18 @@ export default function ChatPage() {
             SILENCE FOR 40 SECONDS. AWKWARD.
           </div>
         )}
+
+        {partnerLeft && (
+          <div
+            className="mono"
+            style={{ textAlign: "center", fontSize: 10, letterSpacing: "0.1em", color: "var(--clay)", padding: "10px 0" }}
+          >
+            {partnerLeft === "leave" ? "SHITMATE FLUSHED AND LEFT" : "SHITMATE VANISHED MID-SENTENCE"}
+          </div>
+        )}
       </div>
 
-      {tray && (
+      {tray && !partnerLeft && (
         <div
           style={{
             margin: "0 12px",
@@ -303,84 +350,120 @@ export default function ChatPage() {
         </div>
       )}
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          send(draft);
-        }}
-        style={{
-          padding: "12px 16px max(34px, env(safe-area-inset-bottom))",
-          borderTop: tray ? "none" : "1px solid var(--line-soft)",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => {
-            setTray((t) => !t);
-            setTraySuppressed(false);
-          }}
-          aria-label="Conversation prompts"
+      {notice && !partnerLeft && (
+        <div style={{ padding: "0 16px", marginBottom: -4 }}>
+          <div
+            style={{
+              background: "rgba(164,85,60,0.12)",
+              color: "var(--clay)",
+              borderRadius: 12,
+              padding: "10px 14px",
+              fontSize: 13,
+            }}
+          >
+            {notice}
+          </div>
+        </div>
+      )}
+
+      {partnerLeft ? (
+        <div
           style={{
-            width: 48,
-            height: 48,
-            flexShrink: 0,
-            border: `1px solid ${tray ? "var(--highlight)" : "var(--line-strong)"}`,
-            borderRadius: 14,
-            background: tray ? "rgba(138,74,24,0.12)" : "transparent",
-            color: tray ? "var(--highlight)" : "var(--faint)",
+            padding: "14px 16px max(34px, env(safe-area-inset-bottom))",
+            borderTop: "1px solid var(--line-soft)",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
+            flexDirection: "column",
+            gap: 10,
           }}
         >
-          <Bubble />
-        </button>
-
-        <input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="Say something…"
-          aria-label="Message"
-          style={{
-            flexGrow: 1,
-            minWidth: 0,
-            height: 48,
-            border: "1px solid var(--line-strong)",
-            borderRadius: 14,
-            padding: "0 16px",
-            fontSize: 15,
-            fontFamily: "var(--font-ui)",
-            color: "var(--ink)",
-            background: "transparent",
-            outline: "none",
+          <button className="btn btn--primary" style={{ minHeight: 58 }} onClick={() => finish("again")}>
+            NEXT SHITMATE
+          </button>
+          <button className="btn btn--ghost" style={{ minHeight: 52 }} onClick={() => finish("done")}>
+            I&apos;M DONE
+          </button>
+        </div>
+      ) : (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            send(draft);
           }}
-        />
-
-        <button
-          type="submit"
-          disabled={!draft.trim()}
-          aria-label="Send"
           style={{
-            width: 48,
-            height: 48,
-            flexShrink: 0,
-            border: "none",
-            borderRadius: 14,
-            background: draft.trim() ? "var(--fill)" : "var(--surface-2)",
-            color: draft.trim() ? "var(--surface)" : "var(--faint)",
+            padding: "12px 16px max(34px, env(safe-area-inset-bottom))",
+            borderTop: tray ? "none" : "1px solid var(--line-soft)",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            cursor: draft.trim() ? "pointer" : "default",
+            gap: 10,
           }}
         >
-          <Send />
-        </button>
-      </form>
+          <button
+            type="button"
+            onClick={() => {
+              setTray((t) => !t);
+              setTraySuppressed(false);
+            }}
+            aria-label="Conversation prompts"
+            style={{
+              width: 48,
+              height: 48,
+              flexShrink: 0,
+              border: `1px solid ${tray ? "var(--highlight)" : "var(--line-strong)"}`,
+              borderRadius: 14,
+              background: tray ? "rgba(138,74,24,0.12)" : "transparent",
+              color: tray ? "var(--highlight)" : "var(--faint)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+            }}
+          >
+            <Bubble />
+          </button>
+
+          <input
+            value={draft}
+            onChange={(e) => type(e.target.value)}
+            placeholder={offline ? "Waiting for the connection…" : "Say something…"}
+            aria-label="Message"
+            disabled={offline}
+            style={{
+              flexGrow: 1,
+              minWidth: 0,
+              height: 48,
+              border: "1px solid var(--line-strong)",
+              borderRadius: 14,
+              padding: "0 16px",
+              fontSize: 15,
+              fontFamily: "var(--font-ui)",
+              color: "var(--ink)",
+              background: "transparent",
+              outline: "none",
+            }}
+          />
+
+          <button
+            type="submit"
+            disabled={!draft.trim() || offline}
+            aria-label="Send"
+            style={{
+              width: 48,
+              height: 48,
+              flexShrink: 0,
+              border: "none",
+              borderRadius: 14,
+              background: draft.trim() && !offline ? "var(--fill)" : "var(--surface-2)",
+              color: draft.trim() && !offline ? "var(--surface)" : "var(--faint)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: draft.trim() && !offline ? "pointer" : "default",
+            }}
+          >
+            <Send />
+          </button>
+        </form>
+      )}
 
       {ending && (
         <EndSheet
@@ -390,6 +473,8 @@ export default function ChatPage() {
           onKeep={() => setEnding(false)}
           onNext={() => finish("again")}
           onDone={() => finish("done")}
+          onReport={() => finish("done", "report")}
+          onBlock={() => finish("done", "block")}
         />
       )}
     </main>
@@ -417,12 +502,7 @@ function Timer({ label, value, color }: { label: string; value: string; color: s
 }
 
 function EndSheet({
-  toilet,
-  chat,
-  count,
-  onKeep,
-  onNext,
-  onDone,
+  toilet, chat, count, onKeep, onNext, onDone, onReport, onBlock,
 }: {
   toilet: string;
   chat: string;
@@ -430,6 +510,8 @@ function EndSheet({
   onKeep: () => void;
   onNext: () => void;
   onDone: () => void;
+  onReport: () => void;
+  onBlock: () => void;
 }) {
   return (
     <div style={{ position: "fixed", inset: 0, display: "flex", justifyContent: "center", zIndex: 10 }}>
@@ -484,8 +566,8 @@ function EndSheet({
         <div style={{ height: 1, background: "var(--line-soft)" }} />
 
         <div style={{ display: "flex", gap: 10 }}>
-          <DangerButton label="REPORT" icon={<Flag />} onClick={onDone} />
-          <DangerButton label="BLOCK" icon={<Block />} onClick={onDone} />
+          <DangerButton label="REPORT" icon={<Flag />} onClick={onReport} />
+          <DangerButton label="BLOCK" icon={<Block />} onClick={onBlock} />
         </div>
       </div>
     </div>

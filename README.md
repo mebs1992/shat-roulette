@@ -6,21 +6,50 @@ This repository holds the front end and the design canvas it was built from.
 
 ## Running it
 
+Two processes — the app, and the realtime worker it talks to:
+
 ```
 npm install
-npm run dev     # http://localhost:3000
-npm run build   # production build
+npm run realtime   # the Cloudflare worker, on :8787
+npm run dev        # the app, on :3000
 ```
 
-Next.js 15 (App Router) + React 19 + TypeScript. Styling is plain CSS with the
-design tokens as custom properties in `app/globals.css` — no utility framework,
-so the values stay identical to the mockups.
+`cp .env.local.example .env.local` first. `npm run typecheck` covers both the
+app and the worker; `npm run build` builds the app.
 
-There is **no backend yet**. `lib/session.ts` holds the whole session in React
-state (persisted to localStorage) and stands in for matchmaking and the other
-person: matching waits and resolves to a random shitmate, and replies arrive on
-a timer with a typing indicator. Swapping it for a real service means replacing
-that one module.
+## How it fits together
+
+Next.js 15 (App Router) + React 19 + TypeScript for the UI. Styling is plain
+CSS with the design tokens as custom properties in `app/globals.css` — no
+utility framework, so the values stay identical to the mockups.
+
+Matchmaking and chat run on a **Cloudflare Durable Object** (`worker/`). One
+lobby object holds the queue and relays messages for the pairs it makes: a
+Durable Object is single-threaded, so pairing has no race to lose. It is also
+the whole backend — there is **no database**. Messages are relayed in memory
+and never stored, which is both the cheapest and the most defensible place to
+be. Per-device stats stay in `localStorage`.
+
+`worker/protocol.ts` is the wire contract, shared by both sides.
+`lib/realtime.ts` is the browser client (reconnects with backoff, deliberately
+does not pretend a dropped chat can be resumed). `lib/session.ts` maps that
+onto React state.
+
+What the lobby enforces: gender-preference matching, longest-wait-first
+queueing, a message rate limit, a maximum message length, mutual blocks that
+never rematch, and structured report logging (visible in `wrangler tail`).
+
+## Deploying
+
+The worker needs a free Cloudflare account:
+
+```
+npx wrangler login
+npm run realtime:deploy
+```
+
+Then point the app at it by setting `NEXT_PUBLIC_REALTIME_URL` to
+`wss://<worker>.<your-subdomain>.workers.dev/ws`.
 
 ### Routes
 
@@ -35,6 +64,9 @@ that one module.
 | `/summary` | Post-shit receipt |
 | `/stats` | Anonymous stats |
 | `/global` | Global shat statistics |
+
+Chat also covers the states a real connection forces: the shitmate leaving or
+dropping out, a lost connection, an empty queue, and server-side rejections.
 
 ## The designs
 

@@ -20,27 +20,40 @@ const ASIDE = [
 
 export default function MatchmakingPage() {
   const router = useRouter();
-  const { findMatch, preference, setPreference, shitStartedAt } = useSession();
+  const { queue, cancelQueue, match, queued, connection, gender, preference, setPreference, shitStartedAt } =
+    useSession();
   const elapsed = useElapsed(shitStartedAt);
   const [line, setLine] = useState(0);
+  const [patience, setPatience] = useState(0);
+
+  // Only claim the place is empty once we have actually waited a bit.
+  const alone = patience > 6 && queued <= 1;
 
   useEffect(() => {
-    const id = setInterval(() => setLine((n) => n + 1), 2600);
+    const id = setInterval(() => {
+      setLine((n) => n + 1);
+      setPatience((n) => n + 1);
+    }, 2600);
     return () => clearInterval(id);
   }, []);
 
+  // No identity yet means we cannot be matched — go and set one.
   useEffect(() => {
-    const signal = { cancelled: false };
-    findMatch(signal).then((found) => {
-      if (found && !signal.cancelled) router.push("/match");
-    });
-    return () => {
-      signal.cancelled = true;
-    };
-  }, [findMatch, router]);
+    if (!gender) router.replace("/preference");
+  }, [gender, router]);
+
+  useEffect(() => {
+    if (connection === "online" && gender) queue();
+  }, [connection, gender, queue]);
+
+  useEffect(() => {
+    if (match) router.push("/match");
+  }, [match, router]);
 
   const filterLabel =
-    preference === "anyone" ? "ANYONE · 3,482 WAITING" : `${GENDER_LABEL[preference].toUpperCase()} ONLY · 1,102 WAITING`;
+    preference === "anyone"
+      ? "MATCHING ANYONE"
+      : `${GENDER_LABEL[preference].toUpperCase()} ONLY`;
 
   return (
     <main className="screen">
@@ -67,7 +80,7 @@ export default function MatchmakingPage() {
             }}
           />
           <span className="mono" style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.06em", color: "var(--text-3)" }}>
-            412 WAITING
+            {queued} WAITING
           </span>
         </div>
       </div>
@@ -138,10 +151,18 @@ export default function MatchmakingPage() {
 
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
           <h1 className="display" style={{ margin: 0, fontSize: 30, textAlign: "center", maxWidth: 300 }}>
-            {STATUS[line % STATUS.length]}
+            {connection !== "online"
+              ? "Can't reach the toilets."
+              : alone
+                ? "Nobody else is shitting."
+                : STATUS[line % STATUS.length]}
           </h1>
-          <p style={{ margin: 0, fontSize: 14, color: "var(--muted)", textAlign: "center" }}>
-            {ASIDE[line % ASIDE.length]}
+          <p style={{ margin: 0, fontSize: 14, color: "var(--muted)", textAlign: "center", maxWidth: 300 }}>
+            {connection !== "online"
+              ? "Reconnecting. Your shit continues regardless."
+              : alone
+                ? "You are the only person in here. Awkward. We'll match you the second someone sits down."
+                : ASIDE[line % ASIDE.length]}
           </p>
         </div>
 
@@ -201,7 +222,13 @@ export default function MatchmakingPage() {
         </div>
       </div>
 
-      <button className="btn btn--ghost" onClick={() => router.push("/")}>
+      <button
+        className="btn btn--ghost"
+        onClick={() => {
+          cancelQueue();
+          router.push("/");
+        }}
+      >
         CANCEL
       </button>
     </main>

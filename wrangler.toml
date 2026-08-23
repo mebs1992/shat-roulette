@@ -1,0 +1,17 @@
+name = "shat-roulette-realtime"
+main = "worker/index.ts"
+compatibility_date = "2025-01-15"
+
+# One lobby holds the queue and relays messages for the pairs it makes.
+# See worker/index.ts for the note on sharding this when it stops being enough.
+[[durable_objects.bindings]]
+name = "LOBBY"
+class_name = "Lobby"
+
+# SQLite-backed Durable Objects — the class that is available on the free plan.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Lobby"]
+
+[observability]
+enabled = true

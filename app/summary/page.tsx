@@ -73,7 +73,7 @@ export default function SummaryPage() {
           <Line label="TOILET TIME" value={formatDuration(lastSummary.toiletMs)} />
           <Line label="CHAT TIME" value={formatDuration(lastSummary.chatMs)} />
           <Line label="MESSAGES" value={String(lastSummary.messages)} />
-          <Line label="SHITMATE" value={`${lastSummary.country} · #${lastSummary.matchId}`} />
+          <Line label="SHITMATE" value={`${lastSummary.country} · #${lastSummary.matchNum}`} />
           <Line label="SHITMATES TODAY" value={String(lastSummary.shitmatesToday)} />
         </div>
 
@@ -97,7 +97,7 @@ export default function SummaryPage() {
           ))}
         </div>
         <div className="mono" style={{ textAlign: "center", fontSize: 10, letterSpacing: "0.16em", color: "var(--paper-ink)" }}>
-          SR-{lastSummary.matchId}-{lastSummary.country}-{formatDuration(lastSummary.toiletMs).replace(":", "")}
+          SR-{lastSummary.matchNum}-{lastSummary.country}-{formatDuration(lastSummary.toiletMs).replace(":", "")}
         </div>
       </div>
 

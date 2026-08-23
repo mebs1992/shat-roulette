@@ -10,18 +10,9 @@ import {
   useRef,
   useState,
 } from "react";
+import { Realtime, deviceId, type Connection, type Gender, type PartnerInfo, type Preference } from "./realtime";
 
-export type Gender = "man" | "woman" | "nonbinary";
-export type Preference = "anyone" | "man" | "woman" | "nonbinary";
-
-export type Match = {
-  id: number;
-  country: string;
-  countryName: string;
-  gender: Gender;
-  /** When they sat down — always earlier than you, because it always is. */
-  startedAt: number;
-};
+export type { Gender, Preference };
 
 export type Message = {
   id: number;
@@ -35,9 +26,11 @@ export type Summary = {
   chatMs: number;
   messages: number;
   country: string;
-  matchId: number;
+  matchNum: number;
   shitmatesToday: number;
 };
+
+export type EndReason = "leave" | "block" | "report";
 
 const STORAGE_KEY = "shat-roulette/v1";
 
@@ -52,24 +45,34 @@ const DEFAULTS: Persisted = {
   gender: null,
   preference: "anyone",
   shitmatesToday: 0,
-  lifetimeShitmates: 47,
+  lifetimeShitmates: 0,
 };
 
 type SessionValue = Persisted & {
   ready: boolean;
+  connection: Connection;
+  online: number;
+  queued: number;
   shitStartedAt: number | null;
   chatStartedAt: number | null;
-  match: Match | null;
+  match: PartnerInfo | null;
+  /** Partner's start time translated onto this device's clock. */
+  partnerStartedAt: number | null;
   messages: Message[];
   theyAreTyping: boolean;
+  partnerLeft: "leave" | "disconnect" | null;
+  /** Transient server complaint, shown by the composer. */
+  notice: string | null;
   lastSummary: Summary | null;
   startShit: () => void;
   setIdentity: (gender: Gender, preference: Preference) => void;
   setPreference: (preference: Preference) => void;
-  findMatch: (signal: { cancelled: boolean }) => Promise<Match | null>;
+  queue: () => void;
+  cancelQueue: () => void;
   beginChat: () => void;
   sendMessage: (text: string) => void;
-  endChat: () => Summary;
+  setTyping: (on: boolean) => void;
+  endChat: (reason: EndReason) => Summary;
   reset: () => void;
 };
 
@@ -84,21 +87,32 @@ export function useSession(): SessionValue {
 export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [persisted, setPersisted] = useState<Persisted>(DEFAULTS);
   const [ready, setReady] = useState(false);
+  const [connection, setConnection] = useState<Connection>("connecting");
+  const [online, setOnline] = useState(0);
+  const [queued, setQueued] = useState(0);
   const [shitStartedAt, setShitStartedAt] = useState<number | null>(null);
   const [chatStartedAt, setChatStartedAt] = useState<number | null>(null);
-  const [match, setMatch] = useState<Match | null>(null);
+  const [match, setMatch] = useState<PartnerInfo | null>(null);
+  const [partnerStartedAt, setPartnerStartedAt] = useState<number | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [theyAreTyping, setTheyAreTyping] = useState(false);
+  const [partnerLeft, setPartnerLeft] = useState<"leave" | "disconnect" | null>(null);
   const [lastSummary, setLastSummary] = useState<Summary | null>(null);
-  const replyTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  // Hydrate after mount so the server and first client render agree.
+  const rt = useRef<Realtime | null>(null);
+  const counters = useRef({ shitmatesToday: 0, lifetimeShitmates: 0 });
+  counters.current = {
+    shitmatesToday: persisted.shitmatesToday,
+    lifetimeShitmates: persisted.lifetimeShitmates,
+  };
+
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) setPersisted({ ...DEFAULTS, ...(JSON.parse(raw) as Partial<Persisted>) });
     } catch {
-      /* private mode, blocked storage — defaults are fine */
+      /* blocked storage — defaults are fine */
     }
     setReady(true);
   }, []);
@@ -115,12 +129,73 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  useEffect(
-    () => () => {
-      replyTimers.current.forEach(clearTimeout);
-    },
-    [],
-  );
+  useEffect(() => {
+    const client = new Realtime({
+      onConnection: setConnection,
+      onMessage: (message) => {
+        switch (message.t) {
+          case "welcome":
+            setOnline(message.online);
+            break;
+          case "online":
+            setOnline(message.count);
+            break;
+          case "waiting":
+            setQueued(message.queued);
+            break;
+          case "matched": {
+            // Translate their server-side start onto this device's clock, so a
+            // skewed phone clock cannot invent a two-hour shit.
+            const offset = message.serverNow - Date.now();
+            setMatch(message.partner);
+            setPartnerStartedAt(message.partner.shitStartedAt - offset);
+            setMessages([]);
+            setPartnerLeft(null);
+            setTheyAreTyping(false);
+            break;
+          }
+          case "msg":
+            setTheyAreTyping(false);
+            setMessages((prev) => [...prev, { id: message.at + prev.length, from: "them", text: message.text, at: message.at }]);
+            break;
+          case "typing":
+            setTheyAreTyping(message.on);
+            break;
+          case "left":
+            setTheyAreTyping(false);
+            setPartnerLeft(message.reason);
+            break;
+          case "error":
+            setNotice(
+              message.code === "rate_limited"
+                ? "Slow down. Even for you that's a lot of typing."
+                : message.code === "too_long"
+                  ? "That's too long. Nobody is reading that."
+                  : null,
+            );
+            break;
+        }
+      },
+    });
+    rt.current = client;
+    client.connect();
+    return () => {
+      client.close();
+      rt.current = null;
+    };
+  }, []);
+
+  // Keep the server's copy of who we are current.
+  useEffect(() => {
+    if (!ready || !persisted.gender || connection !== "online") return;
+    rt.current?.identify(persisted.gender, persisted.preference, shitStartedAt ?? Date.now());
+  }, [connection, persisted.gender, persisted.preference, ready, shitStartedAt]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const id = setTimeout(() => setNotice(null), 4000);
+    return () => clearTimeout(id);
+  }, [notice]);
 
   const startShit = useCallback(() => setShitStartedAt(Date.now()), []);
 
@@ -128,166 +203,99 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     (gender: Gender, preference: Preference) => persist({ gender, preference }),
     [persist],
   );
+  const setPreference = useCallback((preference: Preference) => persist({ preference }), [persist]);
 
-  const setPreference = useCallback(
-    (preference: Preference) => persist({ preference }),
-    [persist],
-  );
-
-  const findMatch = useCallback(
-    async (signal: { cancelled: boolean }) => {
-      // Stands in for the matchmaking service. Narrower filters wait longer,
-      // which is the honest behaviour and the one the preference screen promises.
-      const wait = persisted.preference === "anyone" ? 2400 : 3600;
-      await new Promise((resolve) => setTimeout(resolve, wait + Math.random() * 900));
-      if (signal.cancelled) return null;
-      const found = mockMatch(persisted.preference);
-      setMatch(found);
-      return found;
-    },
-    [persisted.preference],
-  );
-
-  const beginChat = useCallback(() => {
-    setChatStartedAt(Date.now());
-    setMessages([]);
-    const opener = OPENERS[Math.floor(Math.random() * OPENERS.length)];
-    const timer = setTimeout(() => {
-      setTheyAreTyping(true);
-      const timer2 = setTimeout(() => {
-        setTheyAreTyping(false);
-        setMessages((prev) => [
-          ...prev,
-          { id: Date.now(), from: "them", text: opener, at: Date.now() },
-        ]);
-      }, 1400);
-      replyTimers.current.push(timer2);
-    }, 1200);
-    replyTimers.current.push(timer);
+  const queue = useCallback(() => {
+    setMatch(null);
+    setPartnerLeft(null);
+    rt.current?.send({ t: "queue" });
   }, []);
+
+  const cancelQueue = useCallback(() => rt.current?.send({ t: "cancel" }), []);
+
+  const beginChat = useCallback(() => setChatStartedAt(Date.now()), []);
 
   const sendMessage = useCallback((text: string) => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now(), from: "me", text: trimmed, at: Date.now() },
-    ]);
-
-    const typingIn = 600 + Math.random() * 700;
-    const t1 = setTimeout(() => {
-      setTheyAreTyping(true);
-      const t2 = setTimeout(() => {
-        setTheyAreTyping(false);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now(),
-            from: "them",
-            text: REPLIES[Math.floor(Math.random() * REPLIES.length)],
-            at: Date.now(),
-          },
-        ]);
-      }, 900 + Math.random() * 1200);
-      replyTimers.current.push(t2);
-    }, typingIn);
-    replyTimers.current.push(t1);
+    rt.current?.send({ t: "msg", text: trimmed });
+    setMessages((prev) => [...prev, { id: Date.now(), from: "me", text: trimmed, at: Date.now() }]);
   }, []);
 
-  const endChat = useCallback((): Summary => {
-    replyTimers.current.forEach(clearTimeout);
-    replyTimers.current = [];
-    setTheyAreTyping(false);
-    const now = Date.now();
-    const shitmatesToday = persisted.shitmatesToday + 1;
-    const summary: Summary = {
-      toiletMs: shitStartedAt ? now - shitStartedAt : 0,
-      chatMs: chatStartedAt ? now - chatStartedAt : 0,
-      messages: messages.length,
-      country: match?.country ?? "??",
-      matchId: match?.id ?? 0,
-      shitmatesToday,
-    };
-    persist({
-      shitmatesToday,
-      lifetimeShitmates: persisted.lifetimeShitmates + 1,
-    });
-    setLastSummary(summary);
-    setMatch(null);
-    setChatStartedAt(null);
-    setMessages([]);
-    return summary;
-  }, [chatStartedAt, match, messages.length, persist, persisted, shitStartedAt]);
+  const setTyping = useCallback((on: boolean) => rt.current?.send({ t: "typing", on }), []);
+
+  const endChat = useCallback(
+    (reason: EndReason): Summary => {
+      rt.current?.send(reason === "leave" ? { t: "leave" } : reason === "block" ? { t: "block" } : { t: "report" });
+
+      const now = Date.now();
+      const shitmatesToday = counters.current.shitmatesToday + 1;
+      const summary: Summary = {
+        toiletMs: shitStartedAt ? now - shitStartedAt : 0,
+        chatMs: chatStartedAt ? now - chatStartedAt : 0,
+        messages: messages.length,
+        country: match?.country ?? "??",
+        matchNum: match?.num ?? 0,
+        shitmatesToday,
+      };
+      persist({ shitmatesToday, lifetimeShitmates: counters.current.lifetimeShitmates + 1 });
+      setLastSummary(summary);
+      setMatch(null);
+      setPartnerStartedAt(null);
+      setPartnerLeft(null);
+      setChatStartedAt(null);
+      setMessages([]);
+      return summary;
+    },
+    [chatStartedAt, match, messages.length, persist, shitStartedAt],
+  );
 
   const reset = useCallback(() => {
     setShitStartedAt(null);
     setChatStartedAt(null);
     setMatch(null);
+    setPartnerStartedAt(null);
     setMessages([]);
     setLastSummary(null);
+    setPartnerLeft(null);
   }, []);
 
   const value = useMemo<SessionValue>(
     () => ({
       ...persisted,
       ready,
+      connection,
+      online,
+      queued,
       shitStartedAt,
       chatStartedAt,
       match,
+      partnerStartedAt,
       messages,
       theyAreTyping,
+      partnerLeft,
+      notice,
       lastSummary,
       startShit,
       setIdentity,
       setPreference,
-      findMatch,
+      queue,
+      cancelQueue,
       beginChat,
       sendMessage,
+      setTyping,
       endChat,
       reset,
     }),
     [
-      beginChat, chatStartedAt, endChat, findMatch, lastSummary, match, messages,
-      persisted, ready, reset, sendMessage, setIdentity, setPreference,
-      shitStartedAt, startShit, theyAreTyping,
+      beginChat, cancelQueue, chatStartedAt, connection, endChat, lastSummary, match,
+      messages, notice, online, partnerLeft, partnerStartedAt, persisted, queue, queued, ready,
+      reset, sendMessage, setIdentity, setPreference, setTyping, shitStartedAt, startShit, theyAreTyping,
     ],
   );
 
   return createElement(SessionContext.Provider, { value }, children);
 }
-
-/* ---------------------------------------------------------------- mock data */
-
-const COUNTRIES: { code: string; name: string }[] = [
-  { code: "US", name: "United States" },
-  { code: "DE", name: "Germany" },
-  { code: "BR", name: "Brazil" },
-  { code: "JP", name: "Japan" },
-  { code: "PL", name: "Poland" },
-  { code: "NG", name: "Nigeria" },
-  { code: "IE", name: "Ireland" },
-  { code: "KR", name: "South Korea" },
-];
-
-const OPENERS = [
-  "office or home",
-  "hey",
-  "how long have you been in here",
-  "i should not have had the second coffee",
-];
-
-const REPLIES = [
-  "respect",
-  "i'm at my in-laws",
-  "brave",
-  "they have a bidet and i don't understand it",
-  "it's a test. of nerve",
-  "honestly same",
-  "my legs have gone",
-  "someone just knocked. ignoring it",
-  "third floor is the good one",
-  "i've been here so long the light went off",
-];
 
 export const PROMPTS = [
   "What brings you to the toilet today?",
@@ -298,30 +306,13 @@ export const PROMPTS = [
   "Are you hiding from someone right now?",
 ];
 
-function mockMatch(preference: Preference): Match {
-  const country = COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)];
-  const genders: Gender[] = ["man", "woman", "nonbinary"];
-  const gender =
-    preference === "anyone"
-      ? genders[Math.floor(Math.random() * genders.length)]
-      : (preference as Gender);
-  return {
-    id: 10000 + Math.floor(Math.random() * 89999),
-    country: country.code,
-    countryName: country.name,
-    gender,
-    // They always have a head start. It is funnier that way.
-    startedAt: Date.now() - (3 * 60_000 + Math.random() * 9 * 60_000),
-  };
-}
-
 export const GENDER_LABEL: Record<Gender, string> = {
   man: "Man",
   woman: "Woman",
   nonbinary: "Non-binary",
 };
 
-/* ------------------------------------------------------------------ timing */
+export { deviceId };
 
 export function formatDuration(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));

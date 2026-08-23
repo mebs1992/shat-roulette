@@ -49,9 +49,9 @@ function Party({
 
 export default function MatchPage() {
   const router = useRouter();
-  const { match, gender, shitStartedAt, beginChat } = useSession();
+  const { match, partnerStartedAt, gender, shitStartedAt, beginChat } = useSession();
   const mine = useElapsed(shitStartedAt);
-  const theirs = useElapsed(match?.startedAt ?? null);
+  const theirs = useElapsed(partnerStartedAt);
 
   useEffect(() => {
     if (!match) router.replace("/matchmaking");
@@ -101,7 +101,7 @@ export default function MatchPage() {
         </div>
 
         <Party
-          label={`Shitmate #${match.id}`}
+          label={`Shitmate #${match.num}`}
           labelColor="var(--clay)"
           meta={`${GENDER_LABEL[match.gender].toUpperCase()} · ${match.country}`}
           elapsed={theirs}

@@ -43,7 +43,7 @@ export default function GlobalPage() {
         </div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
           <span className="mono" style={{ fontSize: 42, fontWeight: 700, letterSpacing: "-0.04em" }}>
-            <LiveCount start={4281} />
+            <LiveCount />
           </span>
           <span className="mono" style={{ fontSize: 12, color: "var(--highlight)" }}>+312 / HR</span>
         </div>

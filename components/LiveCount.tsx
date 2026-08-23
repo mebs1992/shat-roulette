@@ -1,20 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSession } from "@/lib/session";
 
 /**
- * The "people currently shitting" counter. Starts at a fixed number so the
- * server and client agree, then drifts once mounted.
+ * People actually connected right now, straight from the lobby. Falls back to
+ * a dash until the socket is up, rather than inventing a number.
  */
-export function LiveCount({ start = 3482 }: { start?: number }) {
-  const [count, setCount] = useState(start);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setCount((c) => Math.max(2800, c + Math.round((Math.random() - 0.45) * 9)));
-    }, 2600);
-    return () => clearInterval(id);
-  }, []);
-
-  return <>{count.toLocaleString("en-US")}</>;
+export function LiveCount({ fallback = "—" }: { fallback?: string }) {
+  const { online, connection } = useSession();
+  if (connection !== "online") return <>{fallback}</>;
+  return <>{online.toLocaleString("en-US")}</>;
 }
