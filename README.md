@@ -59,9 +59,14 @@ npm run db:migrate:local   and in the local development copy
 
 Commit the id afterwards — it is not a secret, and the build needs it.
 
-Passwords are PBKDF2-SHA256 (210k iterations) — the Workers runtime has no
-bcrypt or argon2 without shipping WASM. Sessions are opaque ids in D1 behind an
-httpOnly cookie.
+Passwords are PBKDF2-SHA256 — the Workers runtime has no bcrypt or argon2
+without shipping WASM. Sessions are opaque ids in D1 behind an httpOnly cookie.
+
+**The iteration count is a free-plan compromise.** Workers Free allows 10ms of
+CPU per request; 210k iterations costs ~32ms and kills the request, so it runs
+at 25k (~5ms). That is well under the ~600k OWASP suggests. On the Workers Paid
+plan (30s CPU) raise `PBKDF2_ITERATIONS` in `lib/auth.ts` — existing accounts
+keep working, because every hash records the count it was made with.
 
 ## Tests
 

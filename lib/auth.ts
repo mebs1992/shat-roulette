@@ -4,8 +4,19 @@ import { db } from "./db";
 export const SESSION_COOKIE = "sr_session";
 const SESSION_DAYS = 60;
 
-/** PBKDF2 — Workers has no bcrypt or argon2 without shipping WASM. */
-const PBKDF2_ITERATIONS = 210_000;
+/**
+ * PBKDF2 — the Workers runtime has no bcrypt or argon2 without shipping WASM.
+ *
+ * The iteration count is capped by the platform, not by taste: the Workers
+ * Free plan allows 10ms of CPU per request, and 210k iterations costs ~32ms,
+ * which kills the request outright. 25k costs ~4ms and leaves room for the
+ * rest of the handler.
+ *
+ * That is weaker than the ~600k OWASP recommends. Raise this the moment the
+ * account moves to the Workers Paid plan (30s CPU) — old hashes keep working,
+ * because each one records the count it was made with.
+ */
+const PBKDF2_ITERATIONS = 25_000;
 
 export type User = {
   id: string;
@@ -33,12 +44,12 @@ export function newId(): string {
   return randomHex(16);
 }
 
-async function pbkdf2(password: string, salt: Uint8Array): Promise<string> {
+async function pbkdf2(password: string, salt: Uint8Array, iterations = PBKDF2_ITERATIONS): Promise<string> {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, [
     "deriveBits",
   ]);
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt: salt as BufferSource, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+    { name: "PBKDF2", salt: salt as BufferSource, iterations, hash: "SHA-256" },
     key,
     256,
   );
@@ -52,10 +63,16 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [scheme, , saltHex, expected] = stored.split("$");
+  const [scheme, iterations, saltHex, expected] = stored.split("$");
   if (scheme !== "pbkdf2" || !saltHex || !expected) return false;
+
+  // Verify with the count this hash was created with, not the current default.
+  // Otherwise changing PBKDF2_ITERATIONS silently locks out every account.
+  const rounds = Number(iterations);
+  if (!Number.isInteger(rounds) || rounds <= 0) return false;
+
   const salt = new Uint8Array(saltHex.match(/.{2}/g)!.map((h) => parseInt(h, 16)));
-  const actual = await pbkdf2(password, salt);
+  const actual = await pbkdf2(password, salt, rounds);
   // Constant-time-ish: compare every character regardless of mismatch.
   if (actual.length !== expected.length) return false;
   let diff = 0;
