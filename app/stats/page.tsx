@@ -2,13 +2,7 @@ import { redirect } from "next/navigation";
 import { StatsScreen, type StatsData } from "@/components/StatsScreen";
 import { currentUser, publicName } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { formatDuration } from "@/lib/session";
-
-function hoursAndMinutes(ms: number): string {
-  const minutes = Math.floor(ms / 60_000);
-  const hours = Math.floor(minutes / 60);
-  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
-}
+import { formatDuration, formatTotal } from "@/lib/format";
 
 export default async function StatsPage() {
   const user = await currentUser();
@@ -27,7 +21,7 @@ export default async function StatsPage() {
       .toLocaleString("en-GB", { month: "short", year: "numeric" })
       .toUpperCase(),
     totalShitmates: user.total_shitmates,
-    totalShitLabel: hoursAndMinutes(user.total_shit_ms),
+    totalShitLabel: formatTotal(user.total_shit_ms),
     longestShitLabel: user.longest_shit_ms ? formatDuration(user.longest_shit_ms) : "—",
     streakDays: user.streak_days,
     longestStreak: user.longest_streak,

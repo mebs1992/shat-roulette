@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { currentUser } from "@/lib/auth";
+import { currentUser, publicName } from "@/lib/auth";
+import { listFriends } from "@/lib/friends";
+import { HubScreen } from "@/components/HubScreen";
+import { formatDuration, formatTotal } from "@/lib/format";
 import { Mark } from "@/components/Mark";
 import { LiveCount } from "@/components/LiveCount";
 
@@ -12,6 +15,24 @@ const step: React.CSSProperties = {
 
 export default async function HomePage() {
   const user = await currentUser();
+
+  // Signed in, you land on the hub; the pitch below is for strangers.
+  if (user) {
+    const friends = await listFriends(user.id);
+    return (
+      <HubScreen
+        data={{
+          publicName: publicName(user),
+          streakDays: user.streak_days,
+          totalShitmates: user.total_shitmates,
+          totalShitLabel: user.total_shit_ms ? formatTotal(user.total_shit_ms) : "—",
+          longestShitLabel: user.longest_shit_ms ? formatDuration(user.longest_shit_ms) : "—",
+          friendsShitting: friends.filter((f) => f.state === "accepted" && f.shittingNow).length,
+          friendRequests: friends.filter((f) => f.state === "incoming").length,
+        }}
+      />
+    );
+  }
   return (
     <main className="screen" style={{ alignItems: "center" }}>
       <div

@@ -10,7 +10,10 @@ import {
   useRef,
   useState,
 } from "react";
+import { formatDuration } from "./format";
 import { Realtime, type Connection, type Gender, type PartnerInfo, type Preference } from "./realtime";
+
+export { formatDuration };
 
 export type { Gender, Preference };
 
@@ -67,6 +70,8 @@ type SessionValue = Persisted & {
   match: PartnerInfo | null;
   /** Partner's start time translated onto this device's clock. */
   partnerStartedAt: number | null;
+  /** Proof we met this person, redeemable to add them as a friend. */
+  friendToken: string | null;
   messages: Message[];
   theyAreTyping: boolean;
   partnerLeft: "leave" | "disconnect" | null;
@@ -105,6 +110,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [chatStartedAt, setChatStartedAt] = useState<number | null>(null);
   const [match, setMatch] = useState<PartnerInfo | null>(null);
   const [partnerStartedAt, setPartnerStartedAt] = useState<number | null>(null);
+  const [friendToken, setFriendToken] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [theyAreTyping, setTheyAreTyping] = useState(false);
   const [partnerLeft, setPartnerLeft] = useState<"leave" | "disconnect" | null>(null);
@@ -164,6 +170,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             const offset = message.serverNow - Date.now();
             setMatch(message.partner);
             setPartnerStartedAt(message.partner.shitStartedAt - offset);
+            setFriendToken(message.friendToken ?? null);
             setMessages([]);
             setPartnerLeft(null);
             setTheyAreTyping(false);
@@ -217,7 +224,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     return () => clearTimeout(id);
   }, [notice]);
 
-  const startShit = useCallback(() => setShitStartedAt(Date.now()), []);
+  const startShit = useCallback(() => {
+    setShitStartedAt(Date.now());
+    // Tell the server, so friends can see you are in there.
+    void fetch("/api/shit/start", { method: "POST" }).catch(() => {});
+  }, []);
 
   const setIdentity = useCallback(
     (gender: Gender, preference: Preference) => persist({ gender, preference }),
@@ -323,6 +334,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       chatStartedAt,
       match,
       partnerStartedAt,
+      friendToken,
       messages,
       theyAreTyping,
       partnerLeft,
@@ -341,7 +353,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       reset,
     }),
     [
-      beginChat, cancelQueue, chatStartedAt, connection, endChat, endShit, lastSummary, match,
+      beginChat, cancelQueue, chatStartedAt, connection, endChat, endShit, friendToken, lastSummary, match,
       messages, notice, online, partnerLeft, partnerStartedAt, persisted, queue, queued, ready,
       reset, sendMessage, setIdentity, setPreference, setTyping, shitStartedAt, startShit, theyAreTyping,
     ],
@@ -365,14 +377,7 @@ export const GENDER_LABEL: Record<Gender, string> = {
   nonbinary: "Non-binary",
 };
 
-export function formatDuration(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  const seconds = total % 60;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${pad(minutes)}:${pad(seconds)}`;
-}
+
 
 /** Ticking elapsed time since `from`. Returns "00:00" until mounted. */
 export function useElapsed(from: number | null): string {

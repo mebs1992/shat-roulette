@@ -64,7 +64,8 @@ export async function POST(request: Request) {
            total_shitmates = total_shitmates + ?,
            streak_days     = ?,
            longest_streak  = ?,
-           last_shit_day   = ?
+           last_shit_day   = ?,
+           shitting_since  = NULL
          WHERE id = ?`,
       )
       .bind(duration, duration, shitmates, streak, longestStreak, day, user.id),

@@ -85,6 +85,7 @@ bindings — mocking those would only test the mock:
 | `test:auth` | signup validation, sessions, gated pages, sign-out, deletion |
 | `test:lobby-auth` | ticket minting and verification, forged tickets, self-matching |
 | `test:shit` | durations, counters, streak rules, clamping, refusing rubbish |
+| `test:friends` | friend tokens, forged tokens, requests, presence, removal |
 
 ## Cloudflare skills
 
@@ -160,6 +161,11 @@ redeploys the worker automatically.
 | `/summary` | Post-shit receipt |
 | `/stats` | Anonymous stats |
 | `/global` | Global shat statistics |
+| `/friends` | Shitty friends — requests, presence, removal |
+
+Signed in, `/` is a hub: your counters, everything else reachable, one action.
+Signed out it is the pitch. Friends are added with a token the lobby issues to
+both sides when they match, so nobody can befriend an account they never met.
 
 Chat also covers the states a real connection forces: the shitmate leaving or
 dropping out, a lost connection, an empty queue, and server-side rejections.

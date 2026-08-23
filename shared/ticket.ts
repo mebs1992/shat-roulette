@@ -20,6 +20,19 @@ export type TicketPayload = {
 
 export const TICKET_TTL_MS = 5 * 60_000;
 
+/** How long after a chat you can still add the person you met. */
+export const FRIEND_TOKEN_TTL_MS = 6 * 60 * 60_000;
+
+export type FriendTokenPayload = {
+  /** The account the token was issued to. */
+  me: string;
+  /** The account they were talking to. */
+  them: string;
+  /** Their public number, so the app can show who the request is from. */
+  n: number;
+  exp: number;
+};
+
 /**
  * Used only when LOBBY_TICKET_SECRET is unset, which must never be the case in
  * production — see the launch checklist in the README. Both sides log when
@@ -47,6 +60,35 @@ async function key(secret: string): Promise<CryptoKey> {
     false,
     ["sign", "verify"],
   );
+}
+
+/**
+ * Proof that two accounts were matched with each other. Without this the app
+ * would have to take the client's word for who it just met, which would let
+ * anyone add any account they could name.
+ */
+export async function mintFriendToken(payload: FriendTokenPayload, secret: string): Promise<string> {
+  return mintTicket(payload as unknown as TicketPayload, secret);
+}
+
+export async function readFriendToken(token: string, secret: string): Promise<FriendTokenPayload | null> {
+  const [body, signature] = String(token ?? "").split(".");
+  if (!body || !signature) return null;
+  try {
+    const valid = await crypto.subtle.verify(
+      "HMAC",
+      await key(secret),
+      fromBase64url(signature) as BufferSource,
+      new TextEncoder().encode(body),
+    );
+    if (!valid) return null;
+    const payload = JSON.parse(new TextDecoder().decode(fromBase64url(body))) as FriendTokenPayload;
+    if (typeof payload.me !== "string" || typeof payload.them !== "string") return null;
+    if (!(payload.exp > Date.now())) return null;
+    return payload;
+  } catch {
+    return null;
+  }
 }
 
 export async function mintTicket(payload: TicketPayload, secret: string): Promise<string> {

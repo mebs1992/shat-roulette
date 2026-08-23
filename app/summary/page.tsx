@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { useState } from "react";
 import { Close, Share } from "@/components/icons";
 import { formatDuration, useSession } from "@/lib/session";
 
@@ -19,7 +20,24 @@ const BARS = [3, 8, 2, 4, 10, 2, 6, 3, 9, 2, 4, 7, 2, 11, 3, 5, 2, 8, 4, 2, 9, 3
 
 export default function SummaryPage() {
   const router = useRouter();
-  const { lastSummary, shitStartedAt } = useSession();
+  const { lastSummary, shitStartedAt, friendToken } = useSession();
+  const [friendState, setFriendState] = useState<"idle" | "sending" | "pending" | "accepted" | "failed">("idle");
+
+  async function addFriend() {
+    if (!friendToken) return;
+    setFriendState("sending");
+    try {
+      const response = await fetch("/api/friends", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token: friendToken }),
+      });
+      const data = (await response.json()) as { state?: string };
+      setFriendState(response.ok ? (data.state === "accepted" ? "accepted" : "pending") : "failed");
+    } catch {
+      setFriendState("failed");
+    }
+  }
 
   useEffect(() => {
     if (!lastSummary) router.replace("/");
@@ -102,6 +120,60 @@ export default function SummaryPage() {
       </div>
 
       <div className="spacer" />
+
+      {friendToken && (
+        <button
+          onClick={addFriend}
+          disabled={friendState !== "idle"}
+          className="card"
+          style={{
+            marginBottom: 12,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            padding: "14px 16px",
+            minHeight: 60,
+            borderRadius: 16,
+            cursor: friendState === "idle" ? "pointer" : "default",
+            textAlign: "left",
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, flexGrow: 1 }}>
+            <span style={{ fontSize: 15, fontWeight: 500, color: "var(--ink)" }}>
+              {friendState === "accepted"
+                ? "You are shitty friends"
+                : friendState === "pending"
+                  ? "Request sent"
+                  : friendState === "failed"
+                    ? "That didn't work"
+                    : "Add as a shitty friend"}
+            </span>
+            <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--faint)" }}>
+              {friendState === "pending"
+                ? "THEY HAVE TO AGREE"
+                : friendState === "accepted"
+                  ? "THEY ASKED FIRST"
+                  : `SHITMATE #${lastSummary.matchNum}`}
+            </span>
+          </div>
+          {friendState === "idle" && (
+            <span
+              className="mono"
+              style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                color: "var(--surface)",
+                background: "var(--fill)",
+                borderRadius: 999,
+                padding: "9px 13px",
+              }}
+            >
+              ADD
+            </span>
+          )}
+        </button>
+      )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <button className="btn btn--primary" onClick={() => router.push(shitStartedAt ? "/matchmaking" : "/confirm")}>

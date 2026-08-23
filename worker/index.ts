@@ -1,4 +1,4 @@
-import { DEV_SECRET, readTicket } from "../shared/ticket";
+import { DEV_SECRET, FRIEND_TOKEN_TTL_MS, mintFriendToken, readTicket } from "../shared/ticket";
 import {
   MAX_MESSAGE_LENGTH,
   RATE_LIMIT,
@@ -245,6 +245,14 @@ export class Lobby implements DurableObject {
     this.send(client, { t: "identified", num: client.num });
   }
 
+  /** A pass each side can redeem to add the other as a friend. */
+  private async friendToken(me: Client, them: Client): Promise<string> {
+    return mintFriendToken(
+      { me: me.userId, them: them.userId, n: them.num, exp: Date.now() + FRIEND_TOKEN_TTL_MS },
+      this.ticketSecret,
+    );
+  }
+
   private tryPair(client: Client) {
     // Longest wait first. Without this, a narrow filter can starve behind
     // whoever happened to open a socket earliest.
@@ -261,8 +269,12 @@ export class Lobby implements DurableObject {
       this.transcripts.set(candidate, []);
 
       const serverNow = Date.now();
-      this.send(client, { t: "matched", partner: this.describe(candidate), serverNow });
-      this.send(candidate, { t: "matched", partner: this.describe(client), serverNow });
+      void Promise.all([this.friendToken(client, candidate), this.friendToken(candidate, client)]).then(
+        ([forClient, forCandidate]) => {
+          this.send(client, { t: "matched", partner: this.describe(candidate), serverNow, friendToken: forClient });
+          this.send(candidate, { t: "matched", partner: this.describe(client), serverNow, friendToken: forCandidate });
+        },
+      );
     }
   }
 

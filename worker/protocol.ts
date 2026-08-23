@@ -28,7 +28,7 @@ export type ServerMessage
   = { t: "welcome"; num: number; country: string; online: number; serverNow: number }
   | { t: "identified"; num: number }
   | { t: "waiting"; queued: number }
-  | { t: "matched"; partner: PartnerInfo; serverNow: number }
+  | { t: "matched"; partner: PartnerInfo; serverNow: number; friendToken: string }
   | { t: "msg"; text: string; at: number }
   | { t: "typing"; on: boolean }
   | { t: "left"; reason: "leave" | "disconnect" }
