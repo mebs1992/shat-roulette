@@ -19,3 +19,15 @@ build summary     Summary
 build profile     Profile
 build board       Leaderboard
 build logosheet   LogoSheet
+build join          Join
+build signin        SignIn
+build hub           Hub
+build friends       Friends
+build friendsempty  FriendsEmpty
+build settings      Settings
+build delete        DeleteAccount
+build chatleft      ChatLeft
+build chatoffline   ChatOffline
+build mmempty       MatchmakingEmpty
+build confirmno     ConfirmNo
+build summaryfriend SummaryFriend

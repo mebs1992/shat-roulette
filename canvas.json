@@ -5,6 +5,14 @@
       "name": "Core Journey"
     },
     {
+      "id": "page-3",
+      "name": "Accounts & Social"
+    },
+    {
+      "id": "page-4",
+      "name": "Edge States"
+    },
+    {
       "id": "page-2",
       "name": "Alt Directions"
     }
@@ -144,6 +152,114 @@
       "y": 0,
       "w": 390,
       "h": 844
+    },
+    {
+      "file": "Hub.dc.html",
+      "title": "Home \u00b7 signed in",
+      "page": "page-3",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Join.dc.html",
+      "title": "Join",
+      "page": "page-3",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "SignIn.dc.html",
+      "title": "Sign in",
+      "page": "page-3",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Settings.dc.html",
+      "title": "Account",
+      "page": "page-3",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "Friends.dc.html",
+      "title": "Shitty friends",
+      "page": "page-3",
+      "x": 0,
+      "y": 1000,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "FriendsEmpty.dc.html",
+      "title": "Friends \u00b7 empty",
+      "page": "page-3",
+      "x": 470,
+      "y": 1000,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "DeleteAccount.dc.html",
+      "title": "Account \u00b7 deleting",
+      "page": "page-3",
+      "x": 940,
+      "y": 1000,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "ConfirmNo.dc.html",
+      "title": "Confirm \u00b7 said no",
+      "page": "page-4",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "MatchmakingEmpty.dc.html",
+      "title": "Matchmaking \u00b7 alone",
+      "page": "page-4",
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "ChatLeft.dc.html",
+      "title": "Chat \u00b7 they left",
+      "page": "page-4",
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "ChatOffline.dc.html",
+      "title": "Chat \u00b7 reconnecting",
+      "page": "page-4",
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844
+    },
+    {
+      "file": "SummaryFriend.dc.html",
+      "title": "Post-shit \u00b7 add friend",
+      "page": "page-4",
+      "x": 0,
+      "y": 1000,
+      "w": 390,
+      "h": 844
     }
   ],
   "annotations": [
@@ -194,10 +310,34 @@
       "y": -150,
       "w": 880,
       "text": "THE MARK \u2014 the poo emoji redrawn as a proper mark: three dollops, a curled tip, eyes knocked out as transparent holes, no mouth. It replaces the placeholder swirl everywhere it appeared, and now leads the home screen."
+    },
+    {
+      "id": "note-7",
+      "page": "page-3",
+      "x": 0,
+      "y": -150,
+      "w": 860,
+      "text": "EVERYTHING BUILT SINCE THE FIRST CANVAS. Accounts arrived with the launch list \u2014 profiles, friends, streaks and leaderboards all need facts that outlive a chat.\nHome is now two screens: the pitch for strangers, this hub once you are signed in."
+    },
+    {
+      "id": "note-8",
+      "page": "page-3",
+      "x": 0,
+      "y": 880,
+      "w": 860,
+      "text": "Friends have three presence states: shitting (amber, pulsing), around (clay), offline (hollow). Adding is a request until the other person adds back. Your username is only ever shown to friends \u2014 strangers see the number."
+    },
+    {
+      "id": "note-9",
+      "page": "page-4",
+      "x": 0,
+      "y": -150,
+      "w": 860,
+      "text": "STATES A REAL CONNECTION FORCES. The first canvas drew the happy path; these are what the running app actually has to handle \u2014 someone leaving, the connection dropping, an empty queue, and saying no."
     }
   ],
   "launch": {
     "view": "canvas",
-    "page": "page-1"
+    "page": "page-3"
   }
 }
