@@ -1,7 +1,44 @@
-# Shat Roulette — screen designs
+# Shat Roulette
 
-Mobile UI mockups for the MVP: anonymous text chat between two people who are
-currently on the toilet.
+Anonymous text chat between two people who are currently on the toilet.
+
+This repository holds the front end and the design canvas it was built from.
+
+## Running it
+
+```
+npm install
+npm run dev     # http://localhost:3000
+npm run build   # production build
+```
+
+Next.js 15 (App Router) + React 19 + TypeScript. Styling is plain CSS with the
+design tokens as custom properties in `app/globals.css` — no utility framework,
+so the values stay identical to the mockups.
+
+There is **no backend yet**. `lib/session.ts` holds the whole session in React
+state (persisted to localStorage) and stands in for matchmaking and the other
+person: matching waits and resolves to a random shitmate, and replies arrive on
+a timer with a typing indicator. Swapping it for a real service means replacing
+that one module.
+
+### Routes
+
+| Route | Screen |
+| --- | --- |
+| `/` | Home |
+| `/confirm` | Are you currently shitting? |
+| `/preference` | Gender and matching preference |
+| `/matchmaking` | Finding a shitmate |
+| `/match` | Shitmate found |
+| `/chat` | Shat chat, prompts tray, end-chat sheet |
+| `/summary` | Post-shit receipt |
+| `/stats` | Anonymous stats |
+| `/global` | Global shat statistics |
+
+## The designs
+
+Mockups for the MVP, published as a design canvas.
 
 Live canvas: https://claude.ai/code/artifact/ed504eb8-9a9a-4237-90bb-35c2d4f2a5d9
 
