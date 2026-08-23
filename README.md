@@ -118,7 +118,7 @@ From a terminal:
 ```
 npx wrangler login
 npm run realtime:deploy   # the lobby
-npm run app:deploy        # the app
+npm run app:deploy        # builds and deploys the app
 ```
 
 `npm run app:preview` runs the app on the real Workers runtime locally, which
