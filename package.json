@@ -19,7 +19,8 @@
     "db:migrate": "wrangler d1 migrations apply shat-roulette --remote",
     "test:lobby-auth": "node test/lobby-auth.test.mjs",
     "test:shit": "node test/shit.test.mjs",
-    "test": "npm run test:lobby && npm run test:auth && npm run test:lobby-auth && npm run test:shit"
+    "test": "npm run test:lobby && npm run test:auth && npm run test:lobby-auth && npm run test:shit",
+    "db:setup": "node scripts/setup-d1.mjs"
   },
   "dependencies": {
     "next": "^15.5.23",

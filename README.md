@@ -52,10 +52,12 @@ never shown to a stranger.
 First-time setup:
 
 ```
-npx wrangler d1 create shat-roulette      # paste the id into wrangler.jsonc
-npm run db:migrate:local                  # local database, for development
-npm run db:migrate                        # the real one, before deploying
+npm run db:setup           creates the database and writes its id into wrangler.jsonc
+npm run db:migrate         creates the tables in it
+npm run db:migrate:local   and in the local development copy
 ```
+
+Commit the id afterwards — it is not a secret, and the build needs it.
 
 Passwords are PBKDF2-SHA256 (210k iterations) — the Workers runtime has no
 bcrypt or argon2 without shipping WASM. Sessions are opaque ids in D1 behind an
