@@ -18,7 +18,7 @@ export default function ChatPage() {
   const router = useRouter();
   const {
     match, partnerStartedAt, messages, theyAreTyping, partnerLeft, notice, connection,
-    sendMessage, setTyping, endChat, shitStartedAt, chatStartedAt,
+    sendMessage, setTyping, endChat, endShit, shitStartedAt, chatStartedAt,
   } = useSession();
   const mine = useElapsed(shitStartedAt);
   const theirs = useElapsed(partnerStartedAt);
@@ -88,6 +88,8 @@ export default function ChatPage() {
   function finish(next: "again" | "done", reason: EndReason = "leave") {
     setLeaving(true);
     endChat(reason);
+    // "Done" ends the shit itself, not just this conversation.
+    if (next === "done") void endShit();
     router.push(next === "again" ? "/matchmaking" : "/summary");
   }
 

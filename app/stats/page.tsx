@@ -1,170 +1,38 @@
-"use client";
+import { redirect } from "next/navigation";
+import { StatsScreen, type StatsData } from "@/components/StatsScreen";
+import { currentUser, publicName } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { formatDuration } from "@/lib/session";
 
-import { useRouter } from "next/navigation";
-import { Mark } from "@/components/Mark";
-import { ChevronLeft, ChevronRight } from "@/components/icons";
-import { GENDER_LABEL, useSession } from "@/lib/session";
-
-const COUNTRIES = ["US", "DE", "BR", "JP", "PL", "NG", "IE", "KR"];
-
-function Stat({ value, label, accent = false }: { value: string; label: string; accent?: boolean }) {
-  return (
-    <div className="card" style={{ padding: 16, display: "flex", flexDirection: "column", gap: 6 }}>
-      <span
-        className="mono"
-        style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-0.03em", color: accent ? "var(--highlight)" : "var(--ink)" }}
-      >
-        {value}
-      </span>
-      <span className="eyebrow" style={{ fontSize: 10 }}>{label}</span>
-    </div>
-  );
+function hoursAndMinutes(ms: number): string {
+  const minutes = Math.floor(ms / 60_000);
+  const hours = Math.floor(minutes / 60);
+  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
 }
 
-export default function StatsPage() {
-  const router = useRouter();
-  const { lifetimeShitmates, gender, preference } = useSession();
+export default async function StatsPage() {
+  const user = await currentUser();
+  if (!user) redirect("/signin");
 
-  const preferenceLabel =
-    preference === "anyone" ? "matched with anyone" : `matched with ${GENDER_LABEL[preference].toLowerCase()} only`;
+  const met = await (await db())
+    .prepare("SELECT country FROM countries_met WHERE user_id = ? ORDER BY met_at DESC")
+    .bind(user.id)
+    .all<{ country: string }>();
 
-  return (
-    <main className="screen">
-      <div style={{ display: "flex", alignItems: "center", minHeight: 44 }}>
-        <button className="icon-btn" style={{ marginLeft: -12 }} onClick={() => router.back()} aria-label="Back">
-          <ChevronLeft />
-        </button>
-        <div className="eyebrow" style={{ margin: "0 auto", paddingRight: 32 }}>Your stats</div>
-      </div>
+  const data: StatsData = {
+    publicName: publicName(user),
+    username: user.username,
+    country: user.country,
+    joined: new Date(user.created_at)
+      .toLocaleString("en-GB", { month: "short", year: "numeric" })
+      .toUpperCase(),
+    totalShitmates: user.total_shitmates,
+    totalShitLabel: hoursAndMinutes(user.total_shit_ms),
+    longestShitLabel: user.longest_shit_ms ? formatDuration(user.longest_shit_ms) : "—",
+    streakDays: user.streak_days,
+    longestStreak: user.longest_streak,
+    countries: (met.results ?? []).map((row) => row.country),
+  };
 
-      <div style={{ marginTop: 18, display: "flex", alignItems: "center", gap: 14 }}>
-        <div
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 18,
-            background: "var(--surface-2)",
-            border: "1px solid var(--line)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <Mark size={30} />
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <div className="display" style={{ fontSize: 26 }}>Shitmate #48391</div>
-          <div className="mono" style={{ fontSize: 11, letterSpacing: "0.1em", color: "var(--muted)" }}>
-            AU · SHITTING SINCE MAR 2026
-          </div>
-        </div>
-      </div>
-
-      <div style={{ marginTop: 22, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
-        <Stat value={String(lifetimeShitmates)} label="Shitmates" />
-        <Stat value="8" label="Countries" />
-        <Stat value="6h 42m" label="Total shitting" accent />
-        <Stat value="31:07" label="Longest shit" />
-      </div>
-
-      <div className="card" style={{ marginTop: 10, padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
-          <span className="eyebrow" style={{ fontSize: 10 }}>Shit streak</span>
-          <span className="mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--highlight)" }}>12 DAYS</span>
-        </div>
-        <div style={{ display: "flex", gap: 6 }}>
-          {[1, 1, 1, 1, 1, 0.3, 0].map((fill, i) => (
-            <span
-              key={i}
-              style={{
-                flexGrow: 1,
-                height: 28,
-                borderRadius: 7,
-                background:
-                  fill === 1 ? "var(--highlight)" : fill > 0 ? "rgba(138,74,24,0.32)" : "var(--line-soft)",
-              }}
-            />
-          ))}
-        </div>
-        <span style={{ fontSize: 12, color: "var(--faint)" }}>
-          Miss a day and it resets. Your body decides, not you.
-        </span>
-      </div>
-
-      <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 10 }}>
-        <span className="eyebrow" style={{ fontSize: 10 }}>Countries shat with</span>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-          {COUNTRIES.map((c) => (
-            <span
-              key={c}
-              className="mono"
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                border: "1px solid var(--line-strong)",
-                borderRadius: 999,
-                padding: "8px 12px",
-                color: "var(--text-2)",
-              }}
-            >
-              {c}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      <button
-        className="card"
-        onClick={() => router.push("/preference")}
-        style={{
-          marginTop: 12,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "14px 16px",
-          minHeight: 56,
-          cursor: "pointer",
-          textAlign: "left",
-          borderRadius: 16,
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: 3, flexGrow: 1 }}>
-          <span className="eyebrow" style={{ fontSize: 9 }}>Matching</span>
-          <span style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)" }}>
-            {gender ? GENDER_LABEL[gender] : "Not set"} · {preferenceLabel}
-          </span>
-        </div>
-        <span style={{ color: "var(--faint)", display: "flex" }}>
-          <ChevronRight />
-        </span>
-      </button>
-
-      <div className="spacer" />
-
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, minHeight: 44 }}>
-        <span style={{ fontSize: 12, lineHeight: 1.45, color: "var(--faint)", maxWidth: 210 }}>
-          No photo. No followers. No bio. Nothing here to curate.
-        </span>
-        <button
-          style={{
-            minHeight: 44,
-            padding: "0 14px",
-            border: "1px solid var(--line-strong)",
-            borderRadius: 999,
-            background: "transparent",
-            color: "var(--muted)",
-            fontFamily: "var(--font-mono)",
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            cursor: "pointer",
-          }}
-        >
-          NEW IDENTITY
-        </button>
-      </div>
-    </main>
-  );
+  return <StatsScreen data={data} />;
 }

@@ -14,7 +14,7 @@ export type PartnerInfo = {
 
 /** Browser → worker. */
 export type ClientMessage =
-  | { t: "hello"; deviceId: string; gender: Gender; preference: Preference; shitStartedAt: number }
+  | { t: "hello"; ticket: string; gender: Gender; preference: Preference }
   | { t: "queue" }
   | { t: "cancel" }
   | { t: "msg"; text: string }
@@ -26,13 +26,14 @@ export type ClientMessage =
 /** Worker → browser. */
 export type ServerMessage
   = { t: "welcome"; num: number; country: string; online: number; serverNow: number }
+  | { t: "identified"; num: number }
   | { t: "waiting"; queued: number }
   | { t: "matched"; partner: PartnerInfo; serverNow: number }
   | { t: "msg"; text: string; at: number }
   | { t: "typing"; on: boolean }
   | { t: "left"; reason: "leave" | "disconnect" }
   | { t: "online"; count: number }
-  | { t: "error"; code: "rate_limited" | "too_long" | "not_paired" | "bad_message" };
+  | { t: "error"; code: "rate_limited" | "too_long" | "not_paired" | "bad_message" | "unauthenticated" };
 
 export const MAX_MESSAGE_LENGTH = 500;
 /** Messages allowed per RATE_WINDOW_MS. Generous for a human, useless for a script. */

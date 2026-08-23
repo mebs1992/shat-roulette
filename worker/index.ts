@@ -1,3 +1,4 @@
+import { DEV_SECRET, readTicket } from "../shared/ticket";
 import {
   MAX_MESSAGE_LENGTH,
   RATE_LIMIT,
@@ -10,6 +11,8 @@ import {
 
 export interface Env {
   LOBBY: DurableObjectNamespace;
+  /** Shared with the app, which mints the tickets. Set before launch. */
+  LOBBY_TICKET_SECRET?: string;
 }
 
 export default {
@@ -34,7 +37,8 @@ export default {
 
 type Client = {
   socket: WebSocket;
-  deviceId: string;
+  /** Account id from a verified ticket. Empty until hello succeeds. */
+  userId: string;
   num: number;
   country: string;
   gender: Gender;
@@ -44,13 +48,21 @@ type Client = {
   /** When they joined the queue, so the longest wait is served first. */
   queuedAt: number;
   partner: Client | null;
-  /** Device ids this client has blocked. Held for the lifetime of the lobby. */
+  /** Account ids this client has blocked. Held for the lifetime of the lobby. */
   blocked: Set<string>;
   sentAt: number[];
 };
 
 export class Lobby implements DurableObject {
   private clients = new Set<Client>();
+  private readonly ticketSecret: string;
+
+  constructor(_state: DurableObjectState, env: Env) {
+    this.ticketSecret = env.LOBBY_TICKET_SECRET ?? DEV_SECRET;
+    if (!env.LOBBY_TICKET_SECRET) {
+      console.warn("LOBBY_TICKET_SECRET is unset — using the development secret. Do not launch like this.");
+    }
+  }
   /** Kept only so a report can carry context. Dropped when the pair ends. */
   private transcripts = new WeakMap<Client, { from: string; text: string }[]>();
 
@@ -68,8 +80,9 @@ export class Lobby implements DurableObject {
 
     const client: Client = {
       socket: serverSide,
-      deviceId: "",
-      num: 10000 + Math.floor(Math.random() * 89999),
+      userId: "",
+      // Replaced by the account's number once the ticket is verified.
+      num: 0,
       country,
       gender: "man",
       preference: "anyone",
@@ -112,14 +125,15 @@ export class Lobby implements DurableObject {
   private handle(client: Client, message: ClientMessage) {
     switch (message.t) {
       case "hello": {
-        client.deviceId = String(message.deviceId).slice(0, 64);
-        client.gender = message.gender;
-        client.preference = message.preference;
-        client.shitStartedAt = Date.now();
+        void this.identify(client, message.ticket, message.gender, message.preference);
         return;
       }
 
       case "queue": {
+        if (!client.userId) {
+          this.send(client, { t: "error", code: "unauthenticated" });
+          return;
+        }
         // Leaving is always explicit (leave / block / report), so a queue from
         // a client we already paired is an accident — a re-fired effect, a
         // reconnect, a double tap. It used to tear down the live chat and tell
@@ -139,6 +153,10 @@ export class Lobby implements DurableObject {
       }
 
       case "msg": {
+        if (!client.userId) {
+          this.send(client, { t: "error", code: "unauthenticated" });
+          return;
+        }
         const partner = client.partner;
         if (client.state !== "paired" || !partner) {
           this.send(client, { t: "error", code: "not_paired" });
@@ -174,8 +192,8 @@ export class Lobby implements DurableObject {
         const partner = client.partner;
         if (partner) {
           // Both directions, so neither can be served the other again.
-          client.blocked.add(partner.deviceId);
-          partner.blocked.add(client.deviceId);
+          client.blocked.add(partner.userId);
+          partner.blocked.add(client.userId);
         }
         this.partClient(client, "leave");
         return;
@@ -191,15 +209,17 @@ export class Lobby implements DurableObject {
             kind: "REPORT",
             at: new Date().toISOString(),
             reporter: client.num,
+            reporterUserId: client.userId,
             reported: partner?.num ?? null,
+            reportedUserId: partner?.userId ?? null,
             reportedCountry: partner?.country ?? null,
             reason: message.reason ?? null,
             context: transcript.slice(-20),
           }),
         );
         if (partner) {
-          client.blocked.add(partner.deviceId);
-          partner.blocked.add(client.deviceId);
+          client.blocked.add(partner.userId);
+          partner.blocked.add(client.userId);
         }
         this.partClient(client, "leave");
         return;
@@ -208,6 +228,21 @@ export class Lobby implements DurableObject {
       default:
         this.send(client, { t: "error", code: "bad_message" });
     }
+  }
+
+  /** Verifies a ticket and adopts the account identity it carries. */
+  private async identify(client: Client, ticket: string, gender: Gender, preference: Preference) {
+    const payload = await readTicket(ticket, this.ticketSecret);
+    if (!payload) {
+      this.send(client, { t: "error", code: "unauthenticated" });
+      return;
+    }
+    client.userId = payload.u;
+    client.num = payload.n;
+    client.gender = gender;
+    client.preference = preference;
+    client.shitStartedAt = Date.now();
+    this.send(client, { t: "identified", num: client.num });
   }
 
   private tryPair(client: Client) {
@@ -232,8 +267,9 @@ export class Lobby implements DurableObject {
   }
 
   private compatible(a: Client, b: Client): boolean {
-    if (a.deviceId && b.deviceId && a.deviceId === b.deviceId) return false;
-    if (a.blocked.has(b.deviceId) || b.blocked.has(a.deviceId)) return false;
+    // Never yourself — including a second tab or a second device.
+    if (!a.userId || !b.userId || a.userId === b.userId) return false;
+    if (a.blocked.has(b.userId) || b.blocked.has(a.userId)) return false;
     const aWantsB = a.preference === "anyone" || a.preference === b.gender;
     const bWantsA = b.preference === "anyone" || b.preference === a.gender;
     return aWantsB && bWantsA;

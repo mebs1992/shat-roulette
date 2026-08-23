@@ -12,44 +12,18 @@ export type { Gender, PartnerInfo, Preference, ServerMessage };
 
 export type Connection = "connecting" | "online" | "offline";
 
-const DEVICE_KEY = "shat-roulette/device";
-
 /**
- * A random id, without assuming a secure context.
- *
- * crypto.randomUUID() exists only on HTTPS and localhost, so it is undefined
- * on a phone opening the dev server over the LAN, and inside some in-app
- * browsers. getRandomValues() has no such restriction; Math.random is the last
- * resort. This id only has to be unique, never unguessable — it is an
- * anonymous handle, not a credential.
+ * A short-lived signed pass from the app, proving which account is connecting.
+ * Fetched fresh on every identify so an expired one can never be reused.
  */
-function randomId(): string {
-  const webcrypto = globalThis.crypto;
-
-  if (typeof webcrypto?.randomUUID === "function") {
-    return webcrypto.randomUUID();
-  }
-
-  if (typeof webcrypto?.getRandomValues === "function") {
-    const bytes = webcrypto.getRandomValues(new Uint8Array(16));
-    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-  }
-
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
-}
-
-/** Anonymous, per-device, and the only thing tying a person to a ban. */
-export function deviceId(): string {
+async function fetchTicket(): Promise<string | null> {
   try {
-    const existing = window.localStorage.getItem(DEVICE_KEY);
-    if (existing) return existing;
-    const fresh = randomId();
-    window.localStorage.setItem(DEVICE_KEY, fresh);
-    return fresh;
+    const response = await fetch("/api/lobby-ticket", { cache: "no-store" });
+    if (!response.ok) return null;
+    const data = (await response.json()) as { ticket?: string };
+    return data.ticket ?? null;
   } catch {
-    // Storage blocked (private mode, locked-down browser). A per-load id still
-    // lets them chat; it just will not persist a block across reloads.
-    return randomId();
+    return null;
   }
 }
 
@@ -76,7 +50,7 @@ export class Realtime {
   private attempts = 0;
   private closed = false;
   private retry: ReturnType<typeof setTimeout> | null = null;
-  private identity: Extract<ClientMessage, { t: "hello" }> | null = null;
+  private identity: { gender: Gender; preference: Preference } | null = null;
 
   constructor(private handlers: Handlers) {}
 
@@ -101,7 +75,8 @@ export class Realtime {
     socket.onopen = () => {
       this.attempts = 0;
       this.handlers.onConnection("online");
-      if (this.identity) this.send(this.identity);
+      // Re-present a fresh ticket after every reconnect.
+      if (this.identity) void this.sendHello();
     };
 
     socket.onmessage = (event) => {
@@ -130,9 +105,20 @@ export class Realtime {
     this.retry = setTimeout(() => this.open(), delay);
   }
 
-  identify(gender: Gender, preference: Preference, shitStartedAt: number) {
-    this.identity = { t: "hello", deviceId: deviceId(), gender, preference, shitStartedAt };
-    this.send(this.identity);
+  identify(gender: Gender, preference: Preference) {
+    this.identity = { gender, preference };
+    void this.sendHello();
+  }
+
+  private async sendHello() {
+    if (!this.identity) return;
+    const ticket = await fetchTicket();
+    if (!ticket) {
+      // The session is gone. The pages are gated, so this means it expired.
+      this.handlers.onMessage({ t: "error", code: "unauthenticated" });
+      return;
+    }
+    this.send({ t: "hello", ticket, ...this.identity });
   }
 
   send(message: ClientMessage) {

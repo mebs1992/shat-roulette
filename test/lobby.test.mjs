@@ -9,6 +9,21 @@
 const URL = process.env.LOBBY_URL ?? "ws://localhost:8787/ws";
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Mirrors shared/ticket.ts. Signing here keeps this suite standalone — it
+// tests the lobby's rules, not the app's session handling.
+const SECRET = process.env.LOBBY_TICKET_SECRET
+  ?? "dev-only-lobby-secret-set-LOBBY_TICKET_SECRET-before-launch";
+
+const base64url = (bytes) =>
+  btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+async function ticketFor(userId, num) {
+  const payload = base64url(new TextEncoder().encode(JSON.stringify({ u: userId, n: num, exp: Date.now() + 300000 })));
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
+  return `${payload}.${base64url(new Uint8Array(signature))}`;
+}
+
 let pass = 0;
 let fail = 0;
 const check = (label, ok, detail = "") => {
@@ -16,19 +31,21 @@ const check = (label, ok, detail = "") => {
   console.log(`  ${ok ? "PASS" : "FAIL"}  ${label}${detail ? " — " + detail : ""}`);
 };
 
+let nextNum = 10000;
+
 function open(hello) {
   const ws = new WebSocket(URL);
   ws.got = [];
   ws.onmessage = (e) => ws.got.push(JSON.parse(e.data));
-  ws.onopen = () => ws.send(JSON.stringify({ t: "hello", ...hello }));
+  ws.onopen = async () => ws.send(JSON.stringify({ t: "hello", ticket: await ticketFor(hello.userId, hello.num), gender: hello.gender, preference: hello.preference }));
   ws.say = (o) => ws.send(JSON.stringify(o));
   ws.of = (t) => ws.got.filter((m) => m.t === t);
   return ws;
 }
 
-const man = (id) => ({ deviceId: id, gender: "man", preference: "anyone", shitStartedAt: Date.now() });
-const womanOnly = (id) => ({ deviceId: id, gender: "woman", preference: "woman", shitStartedAt: Date.now() });
-const woman = (id) => ({ deviceId: id, gender: "woman", preference: "anyone", shitStartedAt: Date.now() });
+const man = (id) => ({ userId: id, num: nextNum++, gender: "man", preference: "anyone" });
+const womanOnly = (id) => ({ userId: id, num: nextNum++, gender: "woman", preference: "woman" });
+const woman = (id) => ({ userId: id, num: nextNum++, gender: "woman", preference: "anyone" });
 
 console.log("\n1. the gender filter keeps incompatible people apart");
 const a = open(man("a"));

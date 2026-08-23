@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Realtime, deviceId, type Connection, type Gender, type PartnerInfo, type Preference } from "./realtime";
+import { Realtime, type Connection, type Gender, type PartnerInfo, type Preference } from "./realtime";
 
 export type { Gender, Preference };
 
@@ -38,13 +38,22 @@ type Persisted = {
   gender: Gender | null;
   preference: Preference;
   shitmatesToday: number;
+  /** The day shitmatesToday counts, so it resets at midnight. */
+  shitmatesDay: string;
   lifetimeShitmates: number;
 };
+
+function today(): string {
+  // The user's own local date — streaks in UTC are unfair to half the planet.
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
 
 const DEFAULTS: Persisted = {
   gender: null,
   preference: "anyone",
   shitmatesToday: 0,
+  shitmatesDay: "",
   lifetimeShitmates: 0,
 };
 
@@ -73,6 +82,8 @@ type SessionValue = Persisted & {
   sendMessage: (text: string) => void;
   setTyping: (on: boolean) => void;
   endChat: (reason: EndReason) => Summary;
+  /** Records the whole shit and starts a fresh one. */
+  endShit: () => Promise<void>;
   reset: () => void;
 };
 
@@ -101,6 +112,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [notice, setNotice] = useState<string | null>(null);
 
   const rt = useRef<Realtime | null>(null);
+  // Tallies for the shit currently in progress, sent when it ends.
+  const thisShit = useRef({ shitmates: 0, messages: 0, countries: new Set<string>() });
+  const persistedRef = useRef<Persisted>(DEFAULTS);
+  persistedRef.current = persisted;
   const counters = useRef({ shitmatesToday: 0, lifetimeShitmates: 0 });
   counters.current = {
     shitmatesToday: persisted.shitmatesToday,
@@ -166,6 +181,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             setPartnerLeft(message.reason);
             break;
           case "error":
+            if (message.code === "unauthenticated") {
+              // Session expired mid-session; the flow is gated, so send them back.
+              window.location.href = "/signin";
+              return;
+            }
             setNotice(
               message.code === "rate_limited"
                 ? "Slow down. Even for you that's a lot of typing."
@@ -188,8 +208,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   // Keep the server's copy of who we are current.
   useEffect(() => {
     if (!ready || !persisted.gender || connection !== "online") return;
-    rt.current?.identify(persisted.gender, persisted.preference, shitStartedAt ?? Date.now());
-  }, [connection, persisted.gender, persisted.preference, ready, shitStartedAt]);
+    rt.current?.identify(persisted.gender, persisted.preference);
+  }, [connection, persisted.gender, persisted.preference, ready]);
 
   useEffect(() => {
     if (!notice) return;
@@ -229,7 +249,14 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       rt.current?.send(reason === "leave" ? { t: "leave" } : reason === "block" ? { t: "block" } : { t: "report" });
 
       const now = Date.now();
-      const shitmatesToday = counters.current.shitmatesToday + 1;
+      thisShit.current.shitmates += 1;
+      thisShit.current.messages += messages.length;
+      if (match?.country && match.country !== "??") thisShit.current.countries.add(match.country);
+
+      // Roll the daily count over at midnight rather than accumulating forever.
+      const day = today();
+      const carried = persistedRef.current.shitmatesDay === day ? counters.current.shitmatesToday : 0;
+      const shitmatesToday = carried + 1;
       const summary: Summary = {
         toiletMs: shitStartedAt ? now - shitStartedAt : 0,
         chatMs: chatStartedAt ? now - chatStartedAt : 0,
@@ -238,7 +265,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
         matchNum: match?.num ?? 0,
         shitmatesToday,
       };
-      persist({ shitmatesToday, lifetimeShitmates: counters.current.lifetimeShitmates + 1 });
+      persist({ shitmatesToday, shitmatesDay: day, lifetimeShitmates: counters.current.lifetimeShitmates + 1 });
       setLastSummary(summary);
       setMatch(null);
       setPartnerStartedAt(null);
@@ -249,6 +276,31 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     },
     [chatStartedAt, match, messages.length, persist, shitStartedAt],
   );
+
+  const endShit = useCallback(async () => {
+    const startedAt = shitStartedAt;
+    setShitStartedAt(null);
+    if (!startedAt) return;
+
+    const tally = thisShit.current;
+    thisShit.current = { shitmates: 0, messages: 0, countries: new Set<string>() };
+
+    try {
+      await fetch("/api/shit", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          startedAt,
+          shitmates: tally.shitmates,
+          messages: tally.messages,
+          countries: [...tally.countries],
+          day: today(),
+        }),
+      });
+    } catch {
+      // The shit still happened; losing the record is not worth blocking on.
+    }
+  }, [shitStartedAt]);
 
   const reset = useCallback(() => {
     setShitStartedAt(null);
@@ -285,10 +337,11 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       sendMessage,
       setTyping,
       endChat,
+      endShit,
       reset,
     }),
     [
-      beginChat, cancelQueue, chatStartedAt, connection, endChat, lastSummary, match,
+      beginChat, cancelQueue, chatStartedAt, connection, endChat, endShit, lastSummary, match,
       messages, notice, online, partnerLeft, partnerStartedAt, persisted, queue, queued, ready,
       reset, sendMessage, setIdentity, setPreference, setTyping, shitStartedAt, startShit, theyAreTyping,
     ],
@@ -311,8 +364,6 @@ export const GENDER_LABEL: Record<Gender, string> = {
   woman: "Woman",
   nonbinary: "Non-binary",
 };
-
-export { deviceId };
 
 export function formatDuration(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));

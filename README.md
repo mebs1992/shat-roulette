@@ -63,16 +63,30 @@ httpOnly cookie.
 
 ## Tests
 
-```
-npm run realtime     # terminal one
-npm run test:lobby   # terminal two — pairing, filtering, rate limits, blocks
+With `npm run dev` and `npm run realtime` both running:
 
-npm run dev          # terminal one
-npm run test:auth    # terminal two — signup, sessions, gating, deletion
+```
+npm test
 ```
 
-Real websockets and real route handlers against real bindings. Mocking those
-would only test the mock.
+Four suites, all against real websockets, real route handlers and real
+bindings — mocking those would only test the mock:
+
+| Suite | Covers |
+| --- | --- |
+| `test:lobby` | pairing, gender filters, queue order, rate limits, blocks, teardown |
+| `test:auth` | signup validation, sessions, gated pages, sign-out, deletion |
+| `test:lobby-auth` | ticket minting and verification, forged tickets, self-matching |
+| `test:shit` | durations, counters, streak rules, clamping, refusing rubbish |
+
+## Before launch
+
+- [ ] `wrangler secret put LOBBY_TICKET_SECRET` on **both** Workers, with the
+      same value. Until then both fall back to a known development secret and
+      log a warning — anyone could mint a ticket for any account.
+- [ ] Google sign-in credentials
+- [ ] Terms, privacy policy and an age gate
+- [ ] Somewhere for reports to land that a human actually reads
 
 ## Deploying
 
