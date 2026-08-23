@@ -14,16 +14,42 @@ export type Connection = "connecting" | "online" | "offline";
 
 const DEVICE_KEY = "shat-roulette/device";
 
+/**
+ * A random id, without assuming a secure context.
+ *
+ * crypto.randomUUID() exists only on HTTPS and localhost, so it is undefined
+ * on a phone opening the dev server over the LAN, and inside some in-app
+ * browsers. getRandomValues() has no such restriction; Math.random is the last
+ * resort. This id only has to be unique, never unguessable — it is an
+ * anonymous handle, not a credential.
+ */
+function randomId(): string {
+  const webcrypto = globalThis.crypto;
+
+  if (typeof webcrypto?.randomUUID === "function") {
+    return webcrypto.randomUUID();
+  }
+
+  if (typeof webcrypto?.getRandomValues === "function") {
+    const bytes = webcrypto.getRandomValues(new Uint8Array(16));
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
 /** Anonymous, per-device, and the only thing tying a person to a ban. */
 export function deviceId(): string {
   try {
     const existing = window.localStorage.getItem(DEVICE_KEY);
     if (existing) return existing;
-    const fresh = crypto.randomUUID();
+    const fresh = randomId();
     window.localStorage.setItem(DEVICE_KEY, fresh);
     return fresh;
   } catch {
-    return crypto.randomUUID();
+    // Storage blocked (private mode, locked-down browser). A per-load id still
+    // lets them chat; it just will not persist a block across reloads.
+    return randomId();
   }
 }
 
