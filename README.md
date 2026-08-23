@@ -6,16 +6,17 @@ This repository holds the front end and the design canvas it was built from.
 
 ## Running it
 
-Two processes — the app, and the realtime worker it talks to:
+Two processes — the app, and the realtime lobby it talks to:
 
 ```
 npm install
-npm run realtime   # the Cloudflare worker, on :8787
+npm run realtime   # the lobby worker, on :8787
 npm run dev        # the app, on :3000
 ```
 
-`cp .env.local.example .env.local` first. `npm run typecheck` covers both the
-app and the worker; `npm run build` builds the app.
+`cp .env.local.example .env.local` first, so the app talks to your local lobby
+instead of the deployed one. `npm run typecheck` covers both the app and the
+worker.
 
 ## How it fits together
 
@@ -41,12 +42,30 @@ never rematch, and structured report logging (visible in `wrangler tail`).
 
 ## Deploying
 
-The worker needs a free Cloudflare account:
+Two Cloudflare Workers, one repository:
+
+| Project | Config | What it is |
+| --- | --- | --- |
+| `shat-roulette` | `worker/wrangler.toml` | the lobby — queue, pairing, message relay |
+| `shat-roulette-app` | `wrangler.jsonc` | the Next app, built for Workers by OpenNext |
+
+From a terminal:
 
 ```
 npx wrangler login
-npm run realtime:deploy
+npm run realtime:deploy   # the lobby
+npm run app:deploy        # the app
 ```
+
+`npm run app:preview` runs the app on the real Workers runtime locally, which
+is worth doing before deploying — it catches things `next dev` cannot.
+
+For Cloudflare's Git builds, the two projects differ only in their commands:
+
+- lobby — build: *(none)*, deploy: `npx wrangler deploy -c worker/wrangler.toml`
+- app — build: `npm run app:build`, deploy: `npx wrangler deploy`
+
+Both use root directory `/`.
 
 The deployed lobby lives at:
 

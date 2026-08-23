@@ -7,3 +7,7 @@ next-env.d.ts
 
 # local env
 .env.local
+
+# cloudflare build output
+.open-next/
+.wrangler/

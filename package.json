@@ -7,9 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "realtime": "wrangler dev --port 8787",
-    "realtime:deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p worker/tsconfig.json"
+    "realtime": "wrangler dev -c worker/wrangler.toml --port 8787",
+    "realtime:deploy": "wrangler deploy -c worker/wrangler.toml",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p worker/tsconfig.json",
+    "app:build": "opennextjs-cloudflare build",
+    "app:preview": "opennextjs-cloudflare preview",
+    "app:deploy": "opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "next": "^15.5.23",
@@ -18,6 +21,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260822.1",
+    "@opennextjs/cloudflare": "^1.20.2",
     "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",

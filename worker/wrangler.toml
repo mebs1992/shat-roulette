@@ -1,5 +1,5 @@
 name = "shat-roulette"
-main = "worker/index.ts"
+main = "index.ts"
 compatibility_date = "2025-01-15"
 
 # Be explicit rather than relying on deploy-time defaults: one public endpoint,

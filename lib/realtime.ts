@@ -27,13 +27,12 @@ export function deviceId(): string {
   }
 }
 
+/** The deployed lobby. The app is served from a different host, so there is no
+ *  sane same-origin guess — this is the fallback when nothing is configured. */
+const DEPLOYED_LOBBY = "wss://shat-roulette.marcus-ebbeck92.workers.dev/ws";
+
 function endpoint(): string {
-  const configured = process.env.NEXT_PUBLIC_REALTIME_URL;
-  if (configured) return configured;
-  if (typeof window === "undefined") return "ws://localhost:8787/ws";
-  // Same-origin fallback keeps a single-host deployment working with no config.
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${protocol}//${window.location.host}/ws`;
+  return process.env.NEXT_PUBLIC_REALTIME_URL || DEPLOYED_LOBBY;
 }
 
 type Handlers = {
