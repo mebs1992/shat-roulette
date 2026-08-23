@@ -15,12 +15,13 @@ Shat Chat, Conversation Prompts, End Chat, Post-Shit Summary.
 
 ## The mark
 
-A toilet seat and a roulette wheel are the same shape. The outer ring is a seat,
-broken at the front the way a real one is; inside it sit eight wedges, a hub and
-a ball. One form carrying both halves of the name. It is pure SVG in
-`currentColor`, so it recolors and scales anywhere — 24px is the practical floor,
-below which the wedges close up. The brand sheet (`LogoSheet.dc.html`) carries
-the lockups, app icons, size test, palette, and the two marks that lost.
+The poo emoji redrawn as a proper mark: three dollops, a curled tip, two eyes and
+no mouth — the missing smile is the joke, it stares rather than grins. The eyes
+are knocked out with an SVG mask, so they are transparent holes and the mark
+drops onto any ground in a single fill color. 24px is the floor; below that the
+eyes close up and it reads as silhouette (a faceless variant covers favicons and
+watermarks). The brand sheet (`LogoSheet.dc.html`) carries the lockups, app
+icons, size test, palette and variants.
 
 ## Art direction (beige & brown)
 

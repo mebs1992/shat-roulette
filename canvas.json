@@ -12,12 +12,12 @@
   "artboards": [
     {
       "file": "LogoSheet.dc.html",
-      "title": "Brand \u00b7 The mark",
+      "title": "Brand \u00b7 The swirl",
       "page": "page-1",
       "x": -960,
       "y": 0,
       "w": 880,
-      "h": 860
+      "h": 980
     },
     {
       "file": "Main.dc.html",
@@ -193,7 +193,7 @@
       "x": -960,
       "y": -150,
       "w": 880,
-      "text": "THE MARK \u2014 one form carrying both halves of the name: a broken seat ring outside, a segmented wheel and ball inside. It replaces the placeholder swirl everywhere it appeared, and now leads the home screen."
+      "text": "THE MARK \u2014 the poo emoji redrawn as a proper mark: three dollops, a curled tip, eyes knocked out as transparent holes, no mouth. It replaces the placeholder swirl everywhere it appeared, and now leads the home screen."
     }
   ],
   "launch": {
