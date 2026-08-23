@@ -13,7 +13,10 @@
     "app:build": "opennextjs-cloudflare build",
     "app:preview": "opennextjs-cloudflare preview",
     "app:deploy": "opennextjs-cloudflare deploy",
-    "test:lobby": "node test/lobby.test.mjs"
+    "test:lobby": "node test/lobby.test.mjs",
+    "test:auth": "node test/auth.test.mjs",
+    "db:migrate:local": "wrangler d1 execute shat-roulette --local --file=migrations/0001_accounts.sql",
+    "db:migrate": "wrangler d1 execute shat-roulette --remote --file=migrations/0001_accounts.sql"
   },
   "dependencies": {
     "next": "^15.5.23",

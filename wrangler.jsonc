@@ -8,6 +8,14 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "shat-roulette",
+      // Replace with the id from: npx wrangler d1 create shat-roulette
+      "database_id": "REPLACE_WITH_YOUR_D1_ID"
+    }
+  ],
   "workers_dev": true,
   "preview_urls": false,
   "observability": { "enabled": true }

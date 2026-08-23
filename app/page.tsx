@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { currentUser } from "@/lib/auth";
 import { Mark } from "@/components/Mark";
 import { LiveCount } from "@/components/LiveCount";
 
@@ -9,7 +10,8 @@ const step: React.CSSProperties = {
   color: "var(--muted)",
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const user = await currentUser();
   return (
     <main className="screen" style={{ alignItems: "center" }}>
       <div
@@ -113,7 +115,7 @@ export default function HomePage() {
       <div
         style={{ marginTop: 26, alignSelf: "stretch", display: "flex", flexDirection: "column", gap: 14 }}
       >
-        <Link href="/confirm" className="btn btn--primary">
+        <Link href={user ? "/confirm" : "/join"} className="btn btn--primary">
           FIND MY SHITMATE
         </Link>
         <div
@@ -125,13 +127,21 @@ export default function HomePage() {
             minHeight: 44,
           }}
         >
-          <span style={{ fontSize: 14, color: "var(--muted)" }}>Someone is already waiting.</span>
-          <Link
-            href="/global"
-            style={{ fontSize: 14, fontWeight: 500, borderBottom: "1px solid rgba(138,74,24,0.45)" }}
-          >
-            How it works
-          </Link>
+          {user ? (
+            <>
+              <span style={{ fontSize: 14, color: "var(--muted)" }}>Someone is already waiting.</span>
+              <Link href="/global" style={{ fontSize: 14, fontWeight: 500, borderBottom: "1px solid rgba(138,74,24,0.45)" }}>
+                Global stats
+              </Link>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: 14, color: "var(--muted)" }}>Already have an account?</span>
+              <Link href="/signin" style={{ fontSize: 14, fontWeight: 500, borderBottom: "1px solid rgba(138,74,24,0.45)" }}>
+                Sign in
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </main>

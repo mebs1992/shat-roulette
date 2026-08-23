@@ -40,15 +40,39 @@ What the lobby enforces: gender-preference matching, longest-wait-first
 queueing, a message rate limit, a maximum message length, mutual blocks that
 never rematch, and structured report logging (visible in `wrangler tail`).
 
+## Accounts
+
+Accounts live in **Cloudflare D1**. The split is deliberate: Durable Objects
+hold live things (queue, chat, presence), D1 holds durable ones (users,
+sessions, stats). Chat messages are still never stored anywhere.
+
+Public identity is `Shitmate #48391`. The username exists for friends and is
+never shown to a stranger.
+
+First-time setup:
+
+```
+npx wrangler d1 create shat-roulette      # paste the id into wrangler.jsonc
+npm run db:migrate:local                  # local database, for development
+npm run db:migrate                        # the real one, before deploying
+```
+
+Passwords are PBKDF2-SHA256 (210k iterations) — the Workers runtime has no
+bcrypt or argon2 without shipping WASM. Sessions are opaque ids in D1 behind an
+httpOnly cookie.
+
 ## Tests
 
 ```
-npm run realtime     # in one terminal
-npm run test:lobby   # in another
+npm run realtime     # terminal one
+npm run test:lobby   # terminal two — pairing, filtering, rate limits, blocks
+
+npm run dev          # terminal one
+npm run test:auth    # terminal two — signup, sessions, gating, deletion
 ```
 
-Real websockets against the running lobby — pairing, filtering, rate limits,
-blocks and teardown. Mocking those would only test the mock.
+Real websockets and real route handlers against real bindings. Mocking those
+would only test the mock.
 
 ## Deploying
 
