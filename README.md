@@ -48,8 +48,16 @@ npx wrangler login
 npm run realtime:deploy
 ```
 
-Then point the app at it by setting `NEXT_PUBLIC_REALTIME_URL` to
-`wss://<worker>.<your-subdomain>.workers.dev/ws`.
+The deployed lobby lives at:
+
+```
+wss://shat-roulette.marcus-ebbeck92.workers.dev/ws
+```
+
+Set `NEXT_PUBLIC_REALTIME_URL` to that when building the app for production, or
+to `ws://localhost:8787/ws` to develop against a local worker. The repo is also
+connected to Cloudflare Workers Builds, so every push to the default branch
+redeploys the worker automatically.
 
 ### Routes
 

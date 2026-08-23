@@ -1,6 +1,11 @@
-name = "shat-roulette-realtime"
+name = "shat-roulette"
 main = "worker/index.ts"
 compatibility_date = "2025-01-15"
+
+# Be explicit rather than relying on deploy-time defaults: one public endpoint,
+# no per-version preview URLs sharing the same lobby.
+workers_dev = true
+preview_urls = false
 
 # One lobby holds the queue and relays messages for the pairs it makes.
 # See worker/index.ts for the note on sharding this when it stops being enough.
