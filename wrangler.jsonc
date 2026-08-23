@@ -13,7 +13,8 @@
       "binding": "DB",
       "database_name": "shat-roulette",
       // Replace with the id from: npx wrangler d1 create shat-roulette
-      "database_id": "REPLACE_WITH_YOUR_D1_ID"
+      "database_id": "REPLACE_WITH_YOUR_D1_ID",
+      "migrations_dir": "migrations"
     }
   ],
   "workers_dev": true,
