@@ -188,6 +188,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             setPartnerLeft(message.reason);
             break;
           case "error":
+            if (message.code === "banned") {
+              window.location.href = "/banned";
+              return;
+            }
             if (message.code === "unauthenticated") {
               // Session expired mid-session; the flow is gated, so send them back.
               window.location.href = "/signin";

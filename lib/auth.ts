@@ -33,6 +33,7 @@ export type User = {
   streak_days: number;
   longest_streak: number;
   last_shit_day: string | null;
+  banned_at: number | null;
 };
 
 function randomHex(bytes: number): string {
@@ -112,7 +113,7 @@ export async function currentUser(): Promise<User | null> {
     .prepare(
       `SELECT u.id, u.username, u.shitmate_num, u.email, u.avatar, u.country, u.created_at,
               u.total_shits, u.total_shit_ms, u.longest_shit_ms, u.total_shitmates,
-              u.streak_days, u.longest_streak, u.last_shit_day
+              u.streak_days, u.longest_streak, u.last_shit_day, u.banned_at
          FROM sessions s JOIN users u ON u.id = s.user_id
         WHERE s.id = ? AND s.expires_at > ?`,
     )

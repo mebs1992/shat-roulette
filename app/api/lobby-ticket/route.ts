@@ -7,6 +7,9 @@ import { TICKET_TTL_MS, mintTicket } from "@/shared/ticket";
 export async function GET() {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Not signed in." }, { status: 401 });
+  if (user.banned_at != null) {
+    return NextResponse.json({ error: "banned", banned: true }, { status: 403 });
+  }
 
   const secret = (await env()).LOBBY_TICKET_SECRET;
   if (!secret) {

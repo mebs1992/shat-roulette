@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "realtime": "wrangler dev -c worker/wrangler.toml --port 8787",
+    "realtime": "wrangler dev -c worker/wrangler.toml --port 8787 --persist-to .wrangler/state",
     "realtime:deploy": "wrangler deploy -c worker/wrangler.toml",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p worker/tsconfig.json",
     "app:build": "opennextjs-cloudflare build",
@@ -19,10 +19,11 @@
     "db:migrate": "wrangler d1 migrations apply shat-roulette --remote",
     "test:lobby-auth": "node test/lobby-auth.test.mjs",
     "test:shit": "node test/shit.test.mjs",
-    "test": "npm run test:lobby && npm run test:auth && npm run test:lobby-auth && npm run test:shit && npm run test:friends && npm run test:leaderboard",
+    "test": "npm run test:lobby && npm run test:auth && npm run test:lobby-auth && npm run test:shit && npm run test:friends && npm run test:leaderboard && npm run test:ban",
     "db:setup": "node scripts/setup-d1.mjs",
     "test:friends": "node test/friends.test.mjs",
-    "test:leaderboard": "node test/leaderboard.test.mjs"
+    "test:leaderboard": "node test/leaderboard.test.mjs",
+    "test:ban": "node test/ban.test.mjs"
   },
   "dependencies": {
     "next": "^15.5.23",

@@ -111,7 +111,8 @@ permissions the agent has.
       any account. For local development it is read from `.dev.vars` (gitignored).
 - [ ] Google sign-in credentials
 - [ ] Terms, privacy policy and an age gate
-- [ ] Somewhere for reports to land that a human actually reads
+- [x] Reports now auto-ban: three DIFFERENT reporters and an account can no
+      longer be matched. Recorded in D1 by the lobby, enforced at ticket mint.
 - [x] Rate limiting on `/api/auth/login` and `/api/auth/signup` — D1-backed,
       keyed by Cloudflare's client IP. Also blunts signup enumeration probing.
 - [ ] Email verification, which also closes signup email-enumeration

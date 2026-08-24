@@ -14,6 +14,11 @@ name = "LOBBY"
 class_name = "Lobby"
 
 # SQLite-backed Durable Objects — the class that is available on the free plan.
+[[d1_databases]]
+binding = "DB"
+database_name = "shat-roulette"
+database_id = "05bd34ca-a9f7-4288-bfa4-f5db300fd274"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Lobby"]

@@ -13,6 +13,8 @@ export interface Env {
   LOBBY: DurableObjectNamespace;
   /** Shared with the app, which mints the tickets. Set before launch. */
   LOBBY_TICKET_SECRET?: string;
+  /** Same database as the app: reports and bans live here. */
+  DB: D1Database;
 }
 
 export default {
@@ -56,11 +58,16 @@ type Client = {
 export class Lobby implements DurableObject {
   private clients = new Set<Client>();
   private readonly ticketSecret: string;
+  private readonly db: D1Database;
+
+  /** Three DIFFERENT reporters and an account is banned. */
+  private static readonly BAN_THRESHOLD = 3;
 
   constructor(_state: DurableObjectState, env: Env) {
     // No fallback: an unset secret means every ticket is refused (fail closed),
     // never accepted against a secret an attacker could read in the repo.
     this.ticketSecret = env.LOBBY_TICKET_SECRET ?? "";
+    this.db = env.DB;
     if (!this.ticketSecret) {
       console.error("LOBBY_TICKET_SECRET is unset — the lobby will refuse all connections.");
     }
@@ -239,6 +246,10 @@ export class Lobby implements DurableObject {
       this.send(client, { t: "error", code: "unauthenticated" });
       return;
     }
+    if (await this.isBanned(payload.u)) {
+      this.send(client, { t: "error", code: "banned" });
+      return;
+    }
     client.userId = payload.u;
     client.num = payload.n;
     client.gender = gender;
@@ -319,6 +330,44 @@ export class Lobby implements DurableObject {
     this.clients.delete(client);
     this.broadcastOnline();
     this.broadcastWaiting();
+  }
+
+  /** True if this account has been banned. Missing DB fails OPEN — a broken
+   *  ban check must not lock everyone out. */
+  private async isBanned(userId: string): Promise<boolean> {
+    if (!this.db) return false;
+    try {
+      const row = await this.db
+        .prepare("SELECT banned_at FROM users WHERE id = ?")
+        .bind(userId)
+        .first<{ banned_at: number | null }>();
+      return row?.banned_at != null;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Records a report (deduped per reporter) and bans at three distinct ones. */
+  private async recordReport(reporterId: string, reportedId: string): Promise<void> {
+    if (!this.db || !reporterId || !reportedId || reporterId === reportedId) return;
+    try {
+      await this.db
+        .prepare("INSERT OR IGNORE INTO reports (reporter_id, reported_id, created_at) VALUES (?, ?, ?)")
+        .bind(reporterId, reportedId, Date.now())
+        .run();
+      const count = await this.db
+        .prepare("SELECT COUNT(*) AS n FROM reports WHERE reported_id = ?")
+        .bind(reportedId)
+        .first<{ n: number }>();
+      if ((count?.n ?? 0) >= Lobby.BAN_THRESHOLD) {
+        await this.db
+          .prepare("UPDATE users SET banned_at = ? WHERE id = ? AND banned_at IS NULL")
+          .bind(Date.now(), reportedId)
+          .run();
+      }
+    } catch (error) {
+      console.error("recordReport failed:", (error as Error).message);
+    }
   }
 
   private isRateLimited(client: Client): boolean {

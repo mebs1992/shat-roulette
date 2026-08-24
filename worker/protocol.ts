@@ -33,7 +33,7 @@ export type ServerMessage
   | { t: "typing"; on: boolean }
   | { t: "left"; reason: "leave" | "disconnect" }
   | { t: "online"; count: number }
-  | { t: "error"; code: "rate_limited" | "too_long" | "not_paired" | "bad_message" | "unauthenticated" };
+  | { t: "error"; code: "rate_limited" | "too_long" | "not_paired" | "bad_message" | "unauthenticated" | "banned" };
 
 export const MAX_MESSAGE_LENGTH = 500;
 /** Messages allowed per RATE_WINDOW_MS. Generous for a human, useless for a script. */
