@@ -5,6 +5,10 @@ export type Limit = { limit: number; windowMs: number };
 /** Tuned for humans, ruinous for scripts. */
 export const LOGIN_LIMIT: Limit = { limit: 8, windowMs: 10 * 60_000 };
 export const SIGNUP_LIMIT: Limit = { limit: 10, windowMs: 60 * 60_000 };
+/** Plenty for someone typing a name; a wall against scraping the user list. */
+export const SEARCH_LIMIT: Limit = { limit: 40, windowMs: 60_000 };
+/** You can add real friends all day; you cannot spam-blast requests. */
+export const FRIEND_REQUEST_LIMIT: Limit = { limit: 30, windowMs: 60 * 60_000 };
 
 /**
  * The caller's IP, from Cloudflare's own header. Spoofing it past the edge is

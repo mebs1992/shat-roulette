@@ -45,6 +45,13 @@ export const Send = ({ size = 20 }: IconProps) => (
   </svg>
 );
 
+export const Search = ({ size = 18 }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" strokeWidth="1.8" {...base}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="M21 21l-4.3-4.3" />
+  </svg>
+);
+
 export const Photo = ({ size = 20 }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" strokeWidth="1.7" {...base}>
     <rect x="3" y="4" width="18" height="16" rx="2.5" />

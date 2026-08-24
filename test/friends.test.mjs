@@ -115,6 +115,38 @@ check("a non-friend cannot see the username", !carolView.includes(bob.username),
 const anonView = await (await fetch(`${APP}/friends/${bobId}`)).text();
 check("signed out sees nothing of it", !anonView.includes(bob.username), "leaked username to a signed-out visitor");
 
+console.log("\n4c. search and add by username");
+const search = async (account, q) =>
+  (await (await api(account, `/api/friends/search?q=${encodeURIComponent(q)}`)).json()).results ?? [];
+
+// Alice and Bob are friends, so a search shows that state.
+const aliceFinds = await search(alice, bob.username);
+check("search finds the user", aliceFinds.some((r) => r.username === bob.username), JSON.stringify(aliceFinds));
+check("an existing friend reads as accepted", aliceFinds.find((r) => r.username === bob.username)?.state === "accepted");
+check("search never returns yourself", !aliceFinds.some((r) => r.username === alice.username));
+check("search leaks no email or stats", aliceFinds.every((r) => !("email" in r) && !("total_shit_ms" in r)));
+
+// Carol is a stranger to Bob. She can find and add him.
+const carolFinds = await search(carol, bob.username);
+check("a stranger can be found by name", carolFinds.find((r) => r.username === bob.username)?.state === "none");
+const carolBob = carolFinds.find((r) => r.username === bob.username);
+const added = await (await api(carol, "/api/friends", { method: "POST", body: JSON.stringify({ friendId: carolBob.id }) })).json();
+check("adding by id creates a request", added.state === "pending", JSON.stringify(added));
+const bobIncoming = (await (await api(bob, "/api/friends")).json()).friends;
+check("bob sees carol's incoming request", bobIncoming.some((f) => f.username === carol.username && f.state === "incoming"));
+const carolAgain = await search(carol, bob.username);
+check("the search now shows it as sent", carolAgain.find((r) => r.username === bob.username)?.state === "pending");
+
+check("a one-letter search returns nothing", (await search(alice, "a")).length === 0);
+const missing = await api(alice, "/api/friends", { method: "POST", body: JSON.stringify({ friendId: "no-such-user-id" }) });
+check("adding a non-existent id is refused", missing.status === 404, `got ${missing.status}`);
+const anonSearch = await fetch(`${APP}/api/friends/search?q=${encodeURIComponent(bob.username)}`);
+check("search requires an account", anonSearch.status === 401);
+
+// Tidy up carol's request so the removal checks below see a clean slate.
+const carolReq = bobIncoming.find((f) => f.username === carol.username);
+if (carolReq) await api(bob, "/api/friends", { method: "DELETE", body: JSON.stringify({ id: carolReq.id }) });
+
 console.log("\n5. removing");
 await api(alice, "/api/friends", { method: "DELETE", body: JSON.stringify({ id: alicesList[0].id }) });
 check("gone for alice", (await (await api(alice, "/api/friends")).json()).friends.length === 0);

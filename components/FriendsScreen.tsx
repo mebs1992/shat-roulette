@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSession } from "@/lib/session";
 import { ChevronLeft, ChevronRight } from "@/components/icons";
+import { FriendSearch } from "@/components/FriendSearch";
 import type { Friend } from "@/lib/friends";
 
 export function FriendsScreen({ friends: initial }: { friends: Friend[] }) {
@@ -95,6 +96,8 @@ export function FriendsScreen({ friends: initial }: { friends: Friend[] }) {
         </span>
       </div>
 
+      <FriendSearch />
+
       {incoming.length > 0 && (
         <Section title="Wants to be friends">
           {incoming.map((friend) => (
@@ -143,7 +146,7 @@ export function FriendsScreen({ friends: initial }: { friends: Friend[] }) {
         <div style={{ marginTop: 28, display: "flex", flexDirection: "column", gap: 10 }}>
           <span className="display" style={{ fontSize: 26 }}>No shitty friends yet.</span>
           <span style={{ fontSize: 14, lineHeight: 1.5, color: "var(--muted)", maxWidth: 300 }}>
-            After a chat you can add the person you met. They only ever see your username once you are both in.
+            Search a username above to add someone you know, or add the person you met after a chat.
           </span>
         </div>
       )}
