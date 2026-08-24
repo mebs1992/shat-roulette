@@ -38,6 +38,10 @@ function endpoint(): string {
 type Handlers = {
   onMessage: (message: ServerMessage) => void;
   onConnection: (state: Connection) => void;
+  /** The app session itself is gone — the ticket endpoint refused us. Distinct
+   *  from the lobby rejecting a ticket, which is a realtime problem, not a
+   *  reason to throw the user out of the whole app. */
+  onSessionExpired: () => void;
 };
 
 /**
@@ -114,8 +118,11 @@ export class Realtime {
     if (!this.identity) return;
     const ticket = await fetchTicket();
     if (!ticket) {
-      // The session is gone. The pages are gated, so this means it expired.
-      this.handlers.onMessage({ t: "error", code: "unauthenticated" });
+      // The ticket endpoint refused us: the app session really is gone. Stop
+      // retrying and let the app decide to sign the user back in.
+      this.closed = true;
+      if (this.retry) clearTimeout(this.retry);
+      this.handlers.onSessionExpired();
       return;
     }
     this.send({ t: "hello", ticket, ...this.identity });

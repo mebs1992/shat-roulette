@@ -164,6 +164,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const client = new Realtime({
       onConnection: setConnection,
+      onSessionExpired: () => {
+        // The app session is genuinely gone. Bounce to sign-in, but only from a
+        // gated page and never from sign-in itself, so this can't loop.
+        const path = window.location.pathname;
+        if (path !== "/signin" && path !== "/join" && path !== "/") window.location.href = "/signin";
+      },
       onMessage: (message) => {
         switch (message.t) {
           case "welcome":
@@ -206,12 +212,21 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             break;
           case "error":
             if (message.code === "banned") {
-              window.location.href = "/banned";
+              // Guard against a redirect loop: the provider lives on every page,
+              // so /banned would otherwise redirect to itself forever.
+              if (window.location.pathname !== "/banned") window.location.href = "/banned";
               return;
             }
             if (message.code === "unauthenticated") {
-              // Session expired mid-session; the flow is gated, so send them back.
-              window.location.href = "/signin";
+              // The LOBBY rejected our ticket. That is a realtime problem (e.g.
+              // the lobby's signing secret is out of sync), NOT the app session
+              // expiring — a real session loss is caught earlier, when the
+              // ticket endpoint refuses us. So never redirect here: doing so
+              // reloads every page into a loop. Degrade matchmaking instead and
+              // leave the rest of the app usable.
+              rt.current?.close();
+              setConnection("offline");
+              setNotice("Can't reach matchmaking right now. Try again shortly.");
               return;
             }
             setNotice(
