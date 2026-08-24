@@ -45,6 +45,14 @@ export const Send = ({ size = 20 }: IconProps) => (
   </svg>
 );
 
+export const Photo = ({ size = 20 }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" strokeWidth="1.7" {...base}>
+    <rect x="3" y="4" width="18" height="16" rx="2.5" />
+    <circle cx="8.5" cy="9.5" r="1.4" />
+    <path d="M4 17l4.5-4.5a2 2 0 0 1 2.7 0L20 20" />
+  </svg>
+);
+
 export const Funnel = ({ size = 14 }: IconProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" strokeWidth="1.9" {...base}>
     <path d="M4 5h16l-6 7v6l-4 2v-8z" />

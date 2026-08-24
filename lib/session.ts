@@ -20,7 +20,9 @@ export type { Gender, Preference };
 export type Message = {
   id: number;
   from: "me" | "them";
+  /** For an image, this holds the data URL. */
   text: string;
+  kind?: "text" | "image";
   at: number;
 };
 
@@ -90,6 +92,8 @@ type SessionValue = Persisted & {
   cancelQueue: () => void;
   beginChat: () => void;
   sendMessage: (text: string) => void;
+  /** Relays a compressed image data URL. Never stored anywhere. */
+  sendImage: (dataUrl: string) => void;
   setTyping: (on: boolean) => void;
   endChat: (reason: EndReason) => Summary;
   /** Records the whole shit and starts a fresh one. */
@@ -189,6 +193,10 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             setTheyAreTyping(false);
             setMessages((prev) => [...prev, { id: message.at + prev.length, from: "them", text: message.text, at: message.at }]);
             break;
+          case "img":
+            setTheyAreTyping(false);
+            setMessages((prev) => [...prev, { id: message.at + prev.length, from: "them", kind: "image", text: message.data, at: message.at }]);
+            break;
           case "typing":
             setTheyAreTyping(message.on);
             break;
@@ -274,6 +282,12 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     if (!trimmed) return;
     rt.current?.send({ t: "msg", text: trimmed });
     setMessages((prev) => [...prev, { id: Date.now(), from: "me", text: trimmed, at: Date.now() }]);
+  }, []);
+
+  const sendImage = useCallback((dataUrl: string) => {
+    if (!dataUrl) return;
+    rt.current?.send({ t: "img", data: dataUrl });
+    setMessages((prev) => [...prev, { id: Date.now(), from: "me", kind: "image", text: dataUrl, at: Date.now() }]);
   }, []);
 
   const setTyping = useCallback((on: boolean) => rt.current?.send({ t: "typing", on }), []);
@@ -373,6 +387,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       cancelQueue,
       beginChat,
       sendMessage,
+      sendImage,
       setTyping,
       endChat,
       endShit,
@@ -382,7 +397,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       beginChat, cancelQueue, chatStartedAt, connection, directMatch, endChat, endShit, friendToken,
       joinRoom, lastSummary, match, pendingRoom,
       messages, notice, online, partnerLeft, partnerStartedAt, persisted, queue, queued, ready,
-      reset, sendMessage, setIdentity, setPreference, setTyping, shitStartedAt, startShit, theyAreTyping,
+      reset, sendMessage, sendImage, setIdentity, setPreference, setTyping, shitStartedAt, startShit, theyAreTyping,
     ],
   );
 

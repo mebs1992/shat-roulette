@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Block, Bubble, Close, Dots, Flag, Send, Shuffle } from "@/components/icons";
+import { Block, Bubble, Close, Dots, Flag, Photo, Send, Shuffle } from "@/components/icons";
+import { fileToChatImage, ImageTooBig, NotAnImage } from "@/lib/image";
 import {
   GENDER_LABEL,
   PROMPTS,
@@ -10,6 +11,7 @@ import {
   useElapsed,
   useSession,
   type EndReason,
+  type Message,
 } from "@/lib/session";
 
 const SILENCE_MS = 40_000;
@@ -18,7 +20,7 @@ export default function ChatPage() {
   const router = useRouter();
   const {
     match, partnerStartedAt, messages, theyAreTyping, partnerLeft, notice, connection,
-    sendMessage, setTyping, endChat, endShit, shitStartedAt, chatStartedAt,
+    sendMessage, sendImage, setTyping, endChat, endShit, shitStartedAt, chatStartedAt,
   } = useSession();
   const mine = useElapsed(shitStartedAt);
   const theirs = useElapsed(partnerStartedAt);
@@ -31,6 +33,8 @@ export default function ChatPage() {
   const [promptSeed, setPromptSeed] = useState(0);
   const [leaving, setLeaving] = useState(false);
 
+  const [sendingImage, setSendingImage] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastActivity = messages.length ? messages[messages.length - 1].at : chatStartedAt;
@@ -83,6 +87,29 @@ export default function ChatPage() {
     setDraft("");
     setSilent(false);
     setTray(false);
+  }
+
+  async function pickImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // let the same file be re-picked later
+    if (!file || offline) return;
+    setSendingImage(true);
+    try {
+      const dataUrl = await fileToChatImage(file);
+      sendImage(dataUrl);
+      setSilent(false);
+      setTray(false);
+    } catch (err) {
+      const msg =
+        err instanceof ImageTooBig
+          ? "That image is too big to send."
+          : err instanceof NotAnImage
+            ? "Couldn't read that image."
+            : "Something went wrong with that image.";
+      window.alert(msg);
+    } finally {
+      setSendingImage(false);
+    }
   }
 
   function finish(next: "again" | "done", reason: EndReason = "leave") {
@@ -176,42 +203,7 @@ export default function ChatPage() {
           CONNECTED · NEITHER OF YOU KNOWS ANYTHING
         </div>
 
-        {messages.map((m) =>
-          m.from === "me" ? (
-            <div
-              key={m.id}
-              style={{
-                alignSelf: "flex-end",
-                maxWidth: "76%",
-                background: "var(--fill)",
-                color: "var(--surface)",
-                borderRadius: "18px 18px 6px 18px",
-                padding: "12px 15px",
-                fontSize: 15,
-                lineHeight: 1.4,
-                fontWeight: 500,
-              }}
-            >
-              {m.text}
-            </div>
-          ) : (
-            <div
-              key={m.id}
-              style={{
-                alignSelf: "flex-start",
-                maxWidth: "76%",
-                background: "var(--surface-2)",
-                color: "var(--text-2)",
-                borderRadius: "18px 18px 18px 6px",
-                padding: "12px 15px",
-                fontSize: 15,
-                lineHeight: 1.4,
-              }}
-            >
-              {m.text}
-            </div>
-          ),
-        )}
+        {messages.map((m) => <MessageBubble key={m.id} m={m} />)}
 
         {theyAreTyping && !partnerLeft && (
           <>
@@ -424,6 +416,35 @@ export default function ChatPage() {
           </button>
 
           <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            onChange={pickImage}
+            style={{ display: "none" }}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={offline || sendingImage}
+            aria-label="Send a picture"
+            style={{
+              width: 48,
+              height: 48,
+              flexShrink: 0,
+              border: "1px solid var(--line-strong)",
+              borderRadius: 14,
+              background: "transparent",
+              color: offline || sendingImage ? "var(--faint)" : "var(--muted)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: offline || sendingImage ? "default" : "pointer",
+            }}
+          >
+            {sendingImage ? <Spinner /> : <Photo />}
+          </button>
+
+          <input
             value={draft}
             onChange={(e) => type(e.target.value)}
             placeholder={offline ? "Waiting for the connection…" : "Say something…"}
@@ -480,6 +501,107 @@ export default function ChatPage() {
         />
       )}
     </main>
+  );
+}
+
+function MessageBubble({ m }: { m: Message }) {
+  const mine = m.from === "me";
+
+  if (m.kind === "image") {
+    return <ImageBubble src={m.text} mine={mine} />;
+  }
+
+  return (
+    <div
+      style={{
+        alignSelf: mine ? "flex-end" : "flex-start",
+        maxWidth: "76%",
+        background: mine ? "var(--fill)" : "var(--surface-2)",
+        color: mine ? "var(--surface)" : "var(--text-2)",
+        borderRadius: mine ? "18px 18px 6px 18px" : "18px 18px 18px 6px",
+        padding: "12px 15px",
+        fontSize: 15,
+        lineHeight: 1.4,
+        fontWeight: mine ? 500 : 400,
+      }}
+    >
+      {m.text}
+    </div>
+  );
+}
+
+function ImageBubble({ src, mine }: { src: string; mine: boolean }) {
+  // My own images show straight away. A stranger's stays blurred until tapped —
+  // a small guard against an unwanted eyeful landing on screen unannounced.
+  const [revealed, setRevealed] = useState(mine);
+  return (
+    <button
+      type="button"
+      onClick={() => setRevealed(true)}
+      style={{
+        alignSelf: mine ? "flex-end" : "flex-start",
+        maxWidth: "76%",
+        padding: 0,
+        border: "1px solid var(--line-soft)",
+        borderRadius: mine ? "18px 18px 6px 18px" : "18px 18px 18px 6px",
+        overflow: "hidden",
+        background: "var(--surface-2)",
+        cursor: revealed ? "default" : "pointer",
+        position: "relative",
+        display: "block",
+        lineHeight: 0,
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={mine ? "Picture you sent" : "Picture from your shitmate"}
+        style={{
+          display: "block",
+          maxWidth: "100%",
+          height: "auto",
+          filter: revealed ? "none" : "blur(22px)",
+          transform: revealed ? "none" : "scale(1.05)",
+          transition: "filter 0.25s ease",
+        }}
+      />
+      {!revealed && (
+        <span
+          className="mono"
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            color: "var(--surface)",
+            background: "rgba(74,45,20,0.32)",
+            textShadow: "0 1px 3px rgba(0,0,0,0.4)",
+          }}
+        >
+          TAP TO REVEAL
+        </span>
+      )}
+    </button>
+  );
+}
+
+function Spinner() {
+  return (
+    <span
+      style={{
+        width: 18,
+        height: 18,
+        borderRadius: "50%",
+        border: "2px solid var(--line-strong)",
+        borderTopColor: "var(--highlight)",
+        display: "inline-block",
+        animation: "sweep 0.7s linear infinite",
+      }}
+    />
   );
 }
 

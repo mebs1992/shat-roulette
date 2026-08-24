@@ -1,5 +1,7 @@
 import { FRIEND_TOKEN_TTL_MS, mintFriendToken, readTicket } from "../shared/ticket";
 import {
+  IMAGE_DATA_URL,
+  MAX_IMAGE_CHARS,
   MAX_MESSAGE_LENGTH,
   RATE_LIMIT,
   RATE_WINDOW_MS,
@@ -202,6 +204,38 @@ export class Lobby implements DurableObject {
         const at = Date.now();
         this.remember(client, partner, text);
         this.send(partner, { t: "msg", text, at });
+        return;
+      }
+
+      case "img": {
+        if (!client.userId) {
+          this.send(client, { t: "error", code: "unauthenticated" });
+          return;
+        }
+        const partner = client.partner;
+        if (client.state !== "paired" || !partner) {
+          this.send(client, { t: "error", code: "not_paired" });
+          return;
+        }
+        const data = String(message.data ?? "");
+        if (data.length > MAX_IMAGE_CHARS) {
+          this.send(client, { t: "error", code: "too_big" });
+          return;
+        }
+        if (!IMAGE_DATA_URL.test(data)) {
+          this.send(client, { t: "error", code: "bad_image" });
+          return;
+        }
+        if (this.isRateLimited(client)) {
+          this.send(client, { t: "error", code: "rate_limited" });
+          return;
+        }
+        const at = Date.now();
+        // Relay only. The image never touches storage and never enters the
+        // report transcript — that log is only a placeholder so a report still
+        // shows an image was sent, without carrying the bytes anywhere.
+        this.remember(client, partner, "[image]");
+        this.send(partner, { t: "img", data, at });
         return;
       }
 
