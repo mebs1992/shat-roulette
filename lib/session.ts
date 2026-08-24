@@ -72,6 +72,8 @@ type SessionValue = Persisted & {
   partnerStartedAt: number | null;
   /** Proof we met this person, redeemable to add them as a friend. */
   friendToken: string | null;
+  /** True when the current match came from a friend invite, not random. */
+  directMatch: boolean;
   messages: Message[];
   theyAreTyping: boolean;
   partnerLeft: "leave" | "disconnect" | null;
@@ -82,6 +84,9 @@ type SessionValue = Persisted & {
   setIdentity: (gender: Gender, preference: Preference) => void;
   setPreference: (preference: Preference) => void;
   queue: () => void;
+  /** Enter a private room to meet a specific friend, instead of random. */
+  joinRoom: (roomId: string) => void;
+  pendingRoom: string | null;
   cancelQueue: () => void;
   beginChat: () => void;
   sendMessage: (text: string) => void;
@@ -111,6 +116,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   const [match, setMatch] = useState<PartnerInfo | null>(null);
   const [partnerStartedAt, setPartnerStartedAt] = useState<number | null>(null);
   const [friendToken, setFriendToken] = useState<string | null>(null);
+  const [directMatch, setDirectMatch] = useState(false);
+  const [pendingRoom, setPendingRoom] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [theyAreTyping, setTheyAreTyping] = useState(false);
   const [partnerLeft, setPartnerLeft] = useState<"leave" | "disconnect" | null>(null);
@@ -171,6 +178,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
             setMatch(message.partner);
             setPartnerStartedAt(message.partner.shitStartedAt - offset);
             setFriendToken(message.friendToken ?? null);
+            setDirectMatch(Boolean(message.direct));
+            setPendingRoom(null);
             setMessages([]);
             setPartnerLeft(null);
             setTheyAreTyping(false);
@@ -246,7 +255,17 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     rt.current?.send({ t: "queue" });
   }, []);
 
-  const cancelQueue = useCallback(() => rt.current?.send({ t: "cancel" }), []);
+  const joinRoom = useCallback((roomId: string) => {
+    setMatch(null);
+    setPartnerLeft(null);
+    setPendingRoom(roomId);
+    rt.current?.joinRoom(roomId);
+  }, []);
+
+  const cancelQueue = useCallback(() => {
+    setPendingRoom(null);
+    rt.current?.send({ t: "cancel" });
+  }, []);
 
   const beginChat = useCallback(() => setChatStartedAt(Date.now()), []);
 
@@ -339,6 +358,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       match,
       partnerStartedAt,
       friendToken,
+      directMatch,
+      pendingRoom,
       messages,
       theyAreTyping,
       partnerLeft,
@@ -348,6 +369,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setIdentity,
       setPreference,
       queue,
+      joinRoom,
       cancelQueue,
       beginChat,
       sendMessage,
@@ -357,7 +379,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       reset,
     }),
     [
-      beginChat, cancelQueue, chatStartedAt, connection, endChat, endShit, friendToken, lastSummary, match,
+      beginChat, cancelQueue, chatStartedAt, connection, directMatch, endChat, endShit, friendToken,
+      joinRoom, lastSummary, match, pendingRoom,
       messages, notice, online, partnerLeft, partnerStartedAt, persisted, queue, queued, ready,
       reset, sendMessage, setIdentity, setPreference, setTyping, shitStartedAt, startShit, theyAreTyping,
     ],

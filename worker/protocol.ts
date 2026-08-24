@@ -19,6 +19,7 @@ export type ClientMessage =
   | { t: "cancel" }
   | { t: "msg"; text: string }
   | { t: "typing"; on: boolean }
+  | { t: "joinRoom"; roomId: string }
   | { t: "leave" }
   | { t: "block" }
   | { t: "report"; reason?: string };
@@ -28,7 +29,8 @@ export type ServerMessage
   = { t: "welcome"; num: number; country: string; online: number; serverNow: number }
   | { t: "identified"; num: number }
   | { t: "waiting"; queued: number }
-  | { t: "matched"; partner: PartnerInfo; serverNow: number; friendToken: string }
+  | { t: "matched"; partner: PartnerInfo; serverNow: number; friendToken: string; direct?: boolean }
+  | { t: "roomGone" }
   | { t: "msg"; text: string; at: number }
   | { t: "typing"; on: boolean }
   | { t: "left"; reason: "leave" | "disconnect" }

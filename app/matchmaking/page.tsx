@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Mark } from "@/components/Mark";
 import { Funnel } from "@/components/icons";
 import { GENDER_LABEL, useElapsed, useSession } from "@/lib/session";
@@ -18,10 +19,11 @@ const ASIDE = [
   "Filtering by preference. This takes longer.",
 ];
 
-export default function MatchmakingPage() {
+function MatchmakingInner() {
   const router = useRouter();
-  const { queue, cancelQueue, match, queued, connection, gender, preference, setPreference, shitStartedAt } =
+  const { queue, joinRoom, pendingRoom, cancelQueue, match, queued, connection, gender, preference, setPreference, shitStartedAt } =
     useSession();
+  const roomId = useSearchParams().get("room");
   const elapsed = useElapsed(shitStartedAt);
   const [line, setLine] = useState(0);
   const [patience, setPatience] = useState(0);
@@ -42,14 +44,7 @@ export default function MatchmakingPage() {
     if (!gender) router.replace("/preference");
   }, [gender, router]);
 
-  // Once per visit. Strict Mode double-invokes effects, and a second queue
-  // after the server has already paired us is worse than useless.
-  const hasQueued = useRef(false);
-  useEffect(() => {
-    if (connection !== "online" || !gender || hasQueued.current) return;
-    hasQueued.current = true;
-    queue();
-  }, [connection, gender, queue]);
+
 
   useEffect(() => {
     if (match) router.push("/match");
@@ -158,16 +153,20 @@ export default function MatchmakingPage() {
           <h1 className="display" style={{ margin: 0, fontSize: 30, textAlign: "center", maxWidth: 300 }}>
             {connection !== "online"
               ? "Can't reach the toilets."
-              : alone
-                ? "Nobody else is shitting."
-                : STATUS[line % STATUS.length]}
+              : roomId
+                ? "Waiting for your friend…"
+                : alone
+                  ? "Nobody else is shitting."
+                  : STATUS[line % STATUS.length]}
           </h1>
           <p style={{ margin: 0, fontSize: 14, color: "var(--muted)", textAlign: "center", maxWidth: 300 }}>
             {connection !== "online"
               ? "Reconnecting. Your shit continues regardless."
-              : alone
-                ? "You are the only person in here. Awkward. We'll match you the second someone sits down."
-                : ASIDE[line % ASIDE.length]}
+              : roomId
+                ? "They'll drop straight in when they open the invite."
+                : alone
+                  ? "You are the only person in here. Awkward. We'll match you the second someone sits down."
+                  : ASIDE[line % ASIDE.length]}
           </p>
         </div>
 
@@ -237,5 +236,14 @@ export default function MatchmakingPage() {
         CANCEL
       </button>
     </main>
+  );
+}
+
+import { Suspense } from "react";
+export default function MatchmakingPage() {
+  return (
+    <Suspense fallback={<main className="screen" />}>
+      <MatchmakingInner />
+    </Suspense>
   );
 }

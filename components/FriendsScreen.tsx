@@ -2,13 +2,31 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useSession } from "@/lib/session";
 import { ChevronLeft } from "@/components/icons";
 import type { Friend } from "@/lib/friends";
 
 export function FriendsScreen({ friends: initial }: { friends: Friend[] }) {
   const router = useRouter();
+  const { startShit } = useSession();
   const [friends, setFriends] = useState(initial);
   const [busy, setBusy] = useState<string | null>(null);
+
+  async function invite(friendId: string) {
+    setBusy(friendId);
+    const res = await fetch("/api/invites", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ friendId }),
+    });
+    const data = (await res.json()) as { roomId?: string };
+    if (res.ok && data.roomId) {
+      startShit();
+      router.push(`/matchmaking?room=${data.roomId}`);
+    } else {
+      setBusy(null);
+    }
+  }
 
   async function accept(id: string) {
     setBusy(id);
@@ -99,6 +117,9 @@ export function FriendsScreen({ friends: initial }: { friends: Friend[] }) {
         <Section title="Friends">
           {accepted.map((friend) => (
             <Row key={friend.id} friend={friend}>
+              <button onClick={() => invite(friend.id)} disabled={busy === friend.id} style={pill("var(--fill)", "var(--surface)")}>
+                INVITE
+              </button>
               <button onClick={() => remove(friend.id)} disabled={busy === friend.id} style={pill("transparent", "var(--clay)", true)}>
                 REMOVE
               </button>

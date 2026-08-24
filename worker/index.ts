@@ -46,7 +46,9 @@ type Client = {
   gender: Gender;
   preference: Preference;
   shitStartedAt: number;
-  state: "idle" | "queued" | "paired";
+  state: "idle" | "queued" | "paired" | "inroom";
+  /** The private room this client is waiting in or paired through, if any. */
+  room: string | null;
   /** When they joined the queue, so the longest wait is served first. */
   queuedAt: number;
   partner: Client | null;
@@ -57,6 +59,8 @@ type Client = {
 
 export class Lobby implements DurableObject {
   private clients = new Set<Client>();
+  /** roomId -> the first friend waiting there, until the second arrives. */
+  private rooms = new Map<string, Client>();
   private readonly ticketSecret: string;
   private readonly db: D1Database;
 
@@ -97,6 +101,7 @@ export class Lobby implements DurableObject {
       preference: "anyone",
       shitStartedAt: Date.now(),
       state: "idle",
+      room: null,
       queuedAt: 0,
       partner: null,
       blocked: new Set(),
@@ -157,7 +162,20 @@ export class Lobby implements DurableObject {
 
       case "cancel": {
         if (client.state === "queued") client.state = "idle";
+        this.leaveRoom(client);
         this.broadcastWaiting();
+        return;
+      }
+
+      case "joinRoom": {
+        if (!client.userId) {
+          this.send(client, { t: "error", code: "unauthenticated" });
+          return;
+        }
+        if (client.state === "paired") this.partClient(client, "leave");
+        const roomId = String(message.roomId ?? "").slice(0, 100);
+        if (!roomId) return;
+        this.joinRoom(client, roomId);
         return;
       }
 
@@ -266,6 +284,35 @@ export class Lobby implements DurableObject {
     );
   }
 
+  /** Direct pairing: two friends who both present the same room id. */
+  private async joinRoom(client: Client, roomId: string) {
+    const waiting = this.rooms.get(roomId);
+    if (waiting && waiting !== client && waiting.state !== "paired" && this.compatible(client, waiting)) {
+      this.rooms.delete(roomId);
+      client.state = waiting.state = "paired";
+      client.partner = waiting;
+      waiting.partner = client;
+      client.room = waiting.room = roomId;
+      this.transcripts.set(client, []);
+      this.transcripts.set(waiting, []);
+      const serverNow = Date.now();
+      const [forA, forB] = await Promise.all([this.friendToken(client, waiting), this.friendToken(waiting, client)]);
+      this.send(client, { t: "matched", partner: this.describe(waiting), serverNow, friendToken: forA, direct: true });
+      this.send(waiting, { t: "matched", partner: this.describe(client), serverNow, friendToken: forB, direct: true });
+      return;
+    }
+    // First to arrive holds the room open for the friend.
+    this.leaveRoom(client);
+    client.state = "inroom";
+    client.room = roomId;
+    this.rooms.set(roomId, client);
+  }
+
+  private leaveRoom(client: Client) {
+    if (client.room && this.rooms.get(client.room) === client) this.rooms.delete(client.room);
+    client.room = null;
+  }
+
   private tryPair(client: Client) {
     // Longest wait first. Without this, a narrow filter can starve behind
     // whoever happened to open a socket earliest.
@@ -314,6 +361,7 @@ export class Lobby implements DurableObject {
     const partner = client.partner;
     client.partner = null;
     client.state = "idle";
+    client.room = null;
     this.transcripts.delete(client);
 
     if (partner) {
@@ -326,6 +374,7 @@ export class Lobby implements DurableObject {
 
   private disconnect(client: Client) {
     if (!this.clients.has(client)) return;
+    this.leaveRoom(client);
     this.partClient(client, "disconnect");
     this.clients.delete(client);
     this.broadcastOnline();

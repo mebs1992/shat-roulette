@@ -121,6 +121,10 @@ export class Realtime {
     this.send({ t: "hello", ticket, ...this.identity });
   }
 
+  joinRoom(roomId: string) {
+    this.send({ t: "joinRoom", roomId });
+  }
+
   send(message: ClientMessage) {
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(message));

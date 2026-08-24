@@ -23,7 +23,8 @@
     "db:setup": "node scripts/setup-d1.mjs",
     "test:friends": "node test/friends.test.mjs",
     "test:leaderboard": "node test/leaderboard.test.mjs",
-    "test:ban": "node test/ban.test.mjs"
+    "test:ban": "node test/ban.test.mjs",
+    "test:invite": "node test/invite.test.mjs"
   },
   "dependencies": {
     "next": "^15.5.23",
