@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useSession } from "@/lib/session";
-import { ChevronLeft } from "@/components/icons";
+import { ChevronLeft, ChevronRight } from "@/components/icons";
 import type { Friend } from "@/lib/friends";
 
 export function FriendsScreen({ friends: initial }: { friends: Friend[] }) {
@@ -116,7 +117,7 @@ export function FriendsScreen({ friends: initial }: { friends: Friend[] }) {
       {accepted.length > 0 && (
         <Section title="Friends">
           {accepted.map((friend) => (
-            <Row key={friend.id} friend={friend}>
+            <Row key={friend.id} friend={friend} href={`/friends/${friend.id}`}>
               <button onClick={() => invite(friend.id)} disabled={busy === friend.id} style={pill("var(--fill)", "var(--surface)")}>
                 INVITE
               </button>
@@ -151,7 +152,7 @@ export function FriendsScreen({ friends: initial }: { friends: Friend[] }) {
 
       <div style={{ minHeight: 44, display: "flex", alignItems: "center" }}>
         <span style={{ fontSize: 12, lineHeight: 1.45, color: "var(--faint)" }}>
-          Friends see your username and when you are shitting. Nothing else.
+          Friends see your username, your stats, and when you are shitting. Nobody sees your chats.
         </span>
       </div>
     </main>
@@ -183,7 +184,51 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-function Row({ friend, children }: { friend: Friend; children: React.ReactNode }) {
+function Row({ friend, children, href }: { friend: Friend; children: React.ReactNode; href?: string }) {
+  const dot = (
+    <span
+      aria-hidden
+      style={{
+        width: 8,
+        height: 8,
+        flexShrink: 0,
+        borderRadius: "50%",
+        background:
+          friend.presence === "shitting"
+            ? "var(--highlight)"
+            : friend.presence === "available"
+              ? "var(--clay)"
+              : "transparent",
+        border: friend.presence === "offline" ? "1px solid var(--line-strong)" : "none",
+        animation: friend.presence === "shitting" ? "blink 1.6s ease-in-out infinite" : undefined,
+      }}
+    />
+  );
+
+  const identity = (
+    <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+      <span style={{ fontSize: 15, fontWeight: 500, color: "var(--ink)" }}>{friend.username}</span>
+      <span
+        className="mono"
+        style={{
+          fontSize: 10,
+          letterSpacing: "0.08em",
+          color:
+            friend.presence === "shitting"
+              ? "var(--highlight)"
+              : friend.presence === "available"
+                ? "var(--clay)"
+                : "var(--faint)",
+        }}
+      >
+        {friend.presence === "shitting" ? "SHITTING NOW" : friend.presence === "available" ? "AROUND" : "OFFLINE"}
+        {` · #${friend.shitmateNum}`}
+        {friend.country ? ` · ${friend.country}` : ""}
+        {friend.streakDays > 0 ? ` · ${friend.streakDays}D` : ""}
+      </span>
+    </div>
+  );
+
   return (
     <div
       style={{
@@ -194,44 +239,28 @@ function Row({ friend, children }: { friend: Friend; children: React.ReactNode }
         borderTop: "1px solid var(--line-soft)",
       }}
     >
-      <span
-        aria-hidden
-        style={{
-          width: 8,
-          height: 8,
-          flexShrink: 0,
-          borderRadius: "50%",
-          background:
-            friend.presence === "shitting"
-              ? "var(--highlight)"
-              : friend.presence === "available"
-                ? "var(--clay)"
-                : "transparent",
-          border: friend.presence === "offline" ? "1px solid var(--line-strong)" : "none",
-          animation: friend.presence === "shitting" ? "blink 1.6s ease-in-out infinite" : undefined,
-        }}
-      />
-      <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
-        <span style={{ fontSize: 15, fontWeight: 500 }}>{friend.username}</span>
-        <span
-          className="mono"
+      {dot}
+      {href ? (
+        <Link
+          href={href}
+          aria-label={`See ${friend.username}'s stats`}
           style={{
-            fontSize: 10,
-            letterSpacing: "0.08em",
-            color:
-              friend.presence === "shitting"
-                ? "var(--highlight)"
-                : friend.presence === "available"
-                  ? "var(--clay)"
-                  : "var(--faint)",
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            minWidth: 0,
+            textDecoration: "none",
           }}
         >
-          {friend.presence === "shitting" ? "SHITTING NOW" : friend.presence === "available" ? "AROUND" : "OFFLINE"}
-          {` · #${friend.shitmateNum}`}
-          {friend.country ? ` · ${friend.country}` : ""}
-          {friend.streakDays > 0 ? ` · ${friend.streakDays}D` : ""}
-        </span>
-      </div>
+          {identity}
+          <span style={{ color: "var(--faint)", display: "flex", flexShrink: 0 }}>
+            <ChevronRight />
+          </span>
+        </Link>
+      ) : (
+        identity
+      )}
       <div style={{ display: "flex", gap: 8 }}>{children}</div>
     </div>
   );

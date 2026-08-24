@@ -99,6 +99,22 @@ await api(bob, "/api/shit", { method: "POST", body: JSON.stringify({ startedAt: 
 refreshed = (await (await api(alice, "/api/friends")).json()).friends;
 check("finishing drops him back to available", refreshed[0]?.presence === "available", refreshed[0]?.presence);
 
+console.log("\n4b. a friend's stats page is friends-only");
+const bobId = alicesList[0].id;
+// Alice and Bob are accepted friends, so Alice can open Bob's profile.
+const aliceView = await (await api(alice, `/friends/${bobId}`)).text();
+check("a friend sees the profile", aliceView.includes(bob.username), "username missing from profile");
+check("the profile shows shit stats", /Total shitting|Shitmates|Shit streak/.test(aliceView));
+
+// Carol is a stranger to Bob. She must not see his username or stats.
+const carol = await makeAccount("c");
+const carolView = await (await api(carol, `/friends/${bobId}`)).text();
+check("a non-friend cannot see the username", !carolView.includes(bob.username), "leaked username to a stranger");
+
+// Signed out, likewise nothing.
+const anonView = await (await fetch(`${APP}/friends/${bobId}`)).text();
+check("signed out sees nothing of it", !anonView.includes(bob.username), "leaked username to a signed-out visitor");
+
 console.log("\n5. removing");
 await api(alice, "/api/friends", { method: "DELETE", body: JSON.stringify({ id: alicesList[0].id }) });
 check("gone for alice", (await (await api(alice, "/api/friends")).json()).friends.length === 0);
