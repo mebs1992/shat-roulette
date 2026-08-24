@@ -12,10 +12,17 @@ export function RegisterSW() {
     // itself without the user clearing anything. First-time visitors have no
     // controller yet, so they get no reload.
     const hadController = !!navigator.serviceWorker.controller;
-    let refreshing = false;
     const onChange = () => {
-      if (refreshing || !hadController) return;
-      refreshing = true;
+      // Reload at most once per tab session: sessionStorage survives the reload,
+      // so even if the controller changes more than once during the hand-off we
+      // can never fall into a reload loop.
+      if (!hadController) return;
+      try {
+        if (sessionStorage.getItem("sw-reloaded")) return;
+        sessionStorage.setItem("sw-reloaded", "1");
+      } catch {
+        // sessionStorage unavailable (private mode); fall through to one reload.
+      }
       window.location.reload();
     };
     navigator.serviceWorker.addEventListener("controllerchange", onChange);
