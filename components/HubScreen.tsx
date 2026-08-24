@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Mark } from "@/components/Mark";
 import { ChevronRight } from "@/components/icons";
 import { InviteBanner } from "@/components/InviteBanner";
+import { NotifyToggle } from "@/components/NotifyToggle";
 
 export type HubData = {
   publicName: string;
@@ -42,6 +43,7 @@ export function HubScreen({ data }: { data: HubData }) {
       </div>
 
       <InviteBanner />
+      <NotifyToggle />
 
       <div style={{ marginTop: 26, display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10 }}>
         <Stat value={data.streakDays === 0 ? "—" : `${data.streakDays}`} label={data.streakDays === 1 ? "Day streak" : "Day streak"} accent />

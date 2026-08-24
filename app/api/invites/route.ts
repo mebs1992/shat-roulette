@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { currentUser, newId } from "@/lib/auth";
 import { sameOrigin } from "@/lib/csrf";
 import { db } from "@/lib/db";
+import { notify } from "@/lib/notify";
 
 /** Invites older than this are stale — nobody's still on the toilet an hour on. */
 const INVITE_TTL_MS = 30 * 60_000;
@@ -63,6 +64,14 @@ export async function POST(request: Request) {
     .prepare("INSERT INTO invites (id, from_id, to_id, room_id, created_at) VALUES (?, ?, ?, ?, ?)")
     .bind(newId(), user.id, friendId, roomId, Date.now())
     .run();
+
+  // Nudge them even if the app is closed — the whole point of the feature.
+  void notify(friendId, {
+    title: `${user.username} wants to shit with you`,
+    body: "Tap to join them.",
+    url: "/",
+    tag: "invite",
+  });
 
   return NextResponse.json({ roomId });
 }

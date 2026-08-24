@@ -8,6 +8,8 @@ export type Env = {
   LOBBY_TICKET_SECRET?: string;
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
+  VAPID_PRIVATE_JWK?: string;
+  VAPID_SUBJECT?: string;
 };
 
 /** The D1 binding, in both `next dev` and the deployed Worker. */

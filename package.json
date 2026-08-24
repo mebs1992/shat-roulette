@@ -19,12 +19,13 @@
     "db:migrate": "wrangler d1 migrations apply shat-roulette --remote",
     "test:lobby-auth": "node test/lobby-auth.test.mjs",
     "test:shit": "node test/shit.test.mjs",
-    "test": "npm run test:lobby && npm run test:auth && npm run test:lobby-auth && npm run test:shit && npm run test:friends && npm run test:leaderboard && npm run test:ban",
+    "test": "npm run test:lobby && npm run test:auth && npm run test:lobby-auth && npm run test:shit && npm run test:friends && npm run test:leaderboard && npm run test:ban && npm run test:push",
     "db:setup": "node scripts/setup-d1.mjs",
     "test:friends": "node test/friends.test.mjs",
     "test:leaderboard": "node test/leaderboard.test.mjs",
     "test:ban": "node test/ban.test.mjs",
-    "test:invite": "node test/invite.test.mjs"
+    "test:invite": "node test/invite.test.mjs",
+    "test:push": "node test/webpush.test.mjs"
   },
   "dependencies": {
     "next": "^15.5.23",
