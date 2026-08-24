@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useState } from "react";
-import { Close, Share } from "@/components/icons";
+import { Close } from "@/components/icons";
+import { ShareReceipt } from "@/components/ShareReceipt";
 import { formatDuration, useSession } from "@/lib/session";
 
 function Line({ label, value }: { label: string; value: string }) {
@@ -180,14 +181,7 @@ export default function SummaryPage() {
           SHIT AGAIN
         </button>
         <div style={{ display: "flex", gap: 12 }}>
-          <button
-            className="btn btn--ghost"
-            style={{ flexGrow: 1, minHeight: 50, gap: 8, fontFamily: "var(--font-ui)", fontSize: 14, fontWeight: 500 }}
-            onClick={() => navigator.share?.({ title: "Shat Roulette", text: "Shit complete." }).catch(() => {})}
-          >
-            <Share />
-            Share receipt
-          </button>
+          <ShareReceipt summary={lastSummary} />
           <button
             className="btn btn--ghost"
             style={{ flexGrow: 1, minHeight: 50, fontFamily: "var(--font-ui)", fontSize: 14, fontWeight: 500 }}
