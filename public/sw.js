@@ -2,8 +2,10 @@
 // Keeps the app installable and offline-capable, and (when push is enabled)
 // shows notifications the server sends.
 
-const CACHE = "sr-v1";
-const SHELL = ["/", "/manifest.webmanifest"];
+// Bump this whenever the caching behaviour changes; `activate` deletes every
+// other cache, so a stale one on an installed device is purged on next load.
+const CACHE = "sr-v2";
+const SHELL = ["/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {}));
@@ -17,10 +19,28 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// Network-first, falling back to cache — never serve a stale realtime app if online.
+// The worker deliberately does NOT intercept page navigations, Next.js routing
+// (RSC) payloads, API calls, or the websocket. Caching those served stale
+// screens and broke client-side routing — the app must always talk to the
+// network for anything dynamic. We only cache genuinely static, hashed assets
+// (JS/CSS chunks, icons, fonts) so a repeat visit is a little faster and the
+// icons survive a flaky connection.
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-  if (request.method !== "GET" || new URL(request.url).origin !== location.origin) return;
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+  if (url.origin !== location.origin) return;
+
+  const isRSC = request.headers.get("RSC") === "1" || url.searchParams.has("_rsc");
+  const isDynamic =
+    request.mode === "navigate" ||
+    isRSC ||
+    url.pathname.startsWith("/api") ||
+    url.pathname.startsWith("/ws");
+  if (isDynamic) return; // straight to the network, no SW involvement
+
+  // Static asset: network-first, fall back to cache only when offline.
   event.respondWith(
     fetch(request)
       .then((res) => {
@@ -28,7 +48,7 @@ self.addEventListener("fetch", (event) => {
         caches.open(CACHE).then((c) => c.put(request, copy)).catch(() => {});
         return res;
       })
-      .catch(() => caches.match(request).then((c) => c || caches.match("/"))),
+      .catch(() => caches.match(request)),
   );
 });
 
